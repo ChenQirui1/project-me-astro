@@ -1,0 +1,217 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import { Image } from "astro:assets";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+type Props = {
+  project: CollectionEntry<"projects">;
+};
+
+const { project } = Astro.props;
+const { Content } = await project.render();
+---
+
+<Layout title={project.data.title}>
+  <!-- <Navbar /> -->
+  <main class="project-detail">
+    <!-- <nav class="project-nav">
+      <a href="/#projects-section" class="back-link">← Back to Projects</a>
+    </nav> -->
+    <div class="container">
+      <a href="/#projects-section" class="back-link">← .back</a>
+      <header class="project-header">
+        <h1>{project.data.title}</h1>
+        <div class="project-meta">
+          <span class="year">{project.data.year}</span>
+          <span class="medium">{project.data.medium}</span>
+          {
+            project.data.status && (
+              <span class={`status status--${project.data.status}`}>
+                {project.data.status}
+              </span>
+            )
+          }
+        </div>
+      </header>
+
+      {
+        project.data.thumbnail && (
+          <div class="project-image">
+            <Image
+              src={project.data.thumbnail}
+              alt={project.data.title}
+              width={800}
+              height={600}
+              class="main-image"
+            />
+          </div>
+        )
+      }
+
+      <div class="project-content">
+        <div class="description">
+          <p>{project.data.description}</p>
+        </div>
+
+        <div class="content">
+          <Content />
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .project-detail {
+    padding: 2rem 0;
+    min-height: calc(100vh - 4rem);
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .project-header {
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .project-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  .project-meta {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .project-meta span {
+    font-size: 1.1rem;
+    color: #666;
+  }
+
+  .year {
+    font-weight: 600;
+  }
+
+  .medium {
+    font-style: italic;
+  }
+
+  .status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  .status--completed {
+    background: #e7f5e7;
+    color: #2d5a2d;
+  }
+
+  .status--ongoing {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status--paused {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .project-image {
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .main-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .project-content {
+    margin-bottom: 3rem;
+  }
+
+  .description {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+
+  .content {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #444;
+  }
+
+  .content :global(h1),
+  .content :global(h2),
+  .content :global(h3) {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+
+  .content :global(p) {
+    margin-bottom: 1.5rem;
+  }
+
+  .project-nav {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    /* background: #f8f9fa; */
+    color: #495057;
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .back-link:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 1rem;
+    }
+
+    .project-header h1 {
+      font-size: 2.5rem;
+    }
+
+    .project-meta {
+      gap: 1rem;
+    }
+  }
+</style>

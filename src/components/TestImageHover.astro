@@ -1,0 +1,123 @@
+---
+// ImageMouseHover.astro
+interface Props {
+  src: string;
+  alt: string;
+  title: string;
+  description: string;
+}
+
+const { src, alt, title, description } = Astro.props;
+---
+
+<div class="image-container" id="image-container">
+  <img src={src} alt={alt} />
+  <div class="detail-popup" id="detail-popup">
+    <h3>{title}</h3>
+    <p>{description}</p>
+  </div>
+</div>
+
+<style>
+  .image-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .detail-popup {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 1rem;
+    border-radius: 4px;
+    width: 200px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+</style>
+
+<script>
+  function setupHoverEffect() {
+    const container = document.getElementById("image-container");
+    const popup = document.getElementById("detail-popup");
+
+    if (!container || !popup) return;
+
+    let timeout: number;
+
+    container.addEventListener("mousemove", (e) => {
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+
+      // Position the popup with a small offset from the cursor
+      popup.style.left = `${x}px`;
+      popup.style.top = `${y - 10}px`;
+    });
+
+    container.addEventListener("mouseenter", () => {
+      // Small delay before showing the popup
+      timeout = setTimeout(() => {
+        popup.style.opacity = "1";
+      }, 100);
+    });
+
+    container.addEventListener("mouseleave", () => {
+      clearTimeout(timeout);
+      popup.style.opacity = "0";
+    });
+  }
+
+  // Run setup when the component mounts
+  setupHoverEffect();
+
+  // Handle view transitions and dynamic imports
+  document.addEventListener("astro:page-load", setupHoverEffect);
+</script>
+
+<!-- Example usage:
+---
+import ImageMouseHover from '../components/ImageMouseHover.astro';
+---
+
+<div class="gallery">
+  <ImageMouseHover
+    src="/path/to/image.jpg"
+    alt="Sample image"
+    title="Beautiful Landscape"
+    description="A stunning view of mountains and lakes captured during sunset."
+  />
+</div>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+  }
+</style>
+-->

@@ -1,0 +1,156 @@
+---
+import { Image } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+type Props = CollectionEntry<"gallery">["data"] & {
+  Content?: any;
+  compact?: boolean; // Optional prop for compact display
+};
+
+const {
+  title,
+  description,
+  medium,
+  year,
+  image,
+  Content,
+  compact = false,
+} = Astro.props;
+---
+
+<div class={`gallery-item ${compact ? "compact" : ""}`}>
+  <div class="image-container">
+    {
+      image && (
+        <div class="thumbnail">
+          <Image
+            src={image}
+            alt={title}
+            width={compact ? 200 : 400}
+            height={compact ? 200 : 400}
+            class="artwork-image"
+          />
+        </div>
+      )
+    }
+  </div>
+  <div class="item-info">
+    <h3 class="title">{title}</h3>
+    <div class="year">{year}</div>
+    {
+      !compact && (
+        <>
+          <div class="medium">{medium}</div>
+          <div class="description">
+            <p>{description}</p>
+            {Content && <Content />}
+          </div>
+        </>
+      )
+    }
+  </div>
+</div>
+
+<style lang="scss">
+  .gallery-item {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    .image-container {
+      margin-bottom: 1rem;
+
+      .thumbnail {
+        width: 100%;
+        overflow: hidden;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        .artwork-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        &:hover .artwork-image {
+          transform: scale(1.05);
+        }
+      }
+    }
+
+    .item-info {
+      .title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+        color: #333;
+        line-height: 1.3;
+      }
+
+      .year {
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+      }
+
+      .medium {
+        font-size: 0.85rem;
+        color: #777;
+        font-style: italic;
+        margin-bottom: 1rem;
+      }
+
+      .description {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: #555;
+
+        p {
+          margin: 0 0 1rem 0;
+        }
+      }
+    }
+
+    // Compact version for grid/masonry layouts
+    &.compact {
+      .image-container .thumbnail {
+        aspect-ratio: 1;
+      }
+
+      .item-info {
+        .title {
+          font-size: 1rem;
+          margin-bottom: 0.125rem;
+        }
+
+        .year {
+          font-size: 0.8rem;
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    .gallery-item {
+      .item-info .title {
+        font-size: 1.1rem;
+      }
+
+      .item-info .year {
+        font-size: 0.85rem;
+      }
+
+      &.compact .item-info .title {
+        font-size: 0.95rem;
+      }
+    }
+  }
+</style>

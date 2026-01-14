@@ -1,0 +1,153 @@
+---
+import Socials from "./Socials.astro";
+const navigation = [
+  { href: "/", text: "Home" },
+  { href: "/projects", text: ".projects" },
+  { href: "/gallery", text: ".gallery" },
+  { href: "/archive", text: ".archive" },
+  { href: "/cv", text: ".cv" },
+];
+const { page } = Astro.props;
+---
+
+<nav>
+  <ul id="navbar">
+    <!-- <li><a href="/projects">.projects</a></li> -->
+    <!-- <li><a href="/gallery">.gallery</a></li> -->
+    <!-- <li><a href="/archive">.archive</a></li> -->
+    <!-- <li><a href="/">.home</a></li> -->
+    <li><a href="/#projects-section">.projects</a></li>
+    <li><a href="/gallery">.gallery</a></li>
+    <li><a href="/cv">.cv</a></li>
+    <button id="cta">GET IN TOUCH</button>
+  </ul>
+  <div id="nav-collapsed">
+    <div id="nav-submenu">
+      <button id="cta">GET IN TOUCH</button>
+      <ul id="nav-sublinks">
+        <li><a href="/projects">.projects</a></li>
+        <li><a href="/gallery">.gallery</a></li>
+        <li><a href="/archive">.archive</a></li>
+        <!-- <li><a href="/">.home</a></li> -->
+        <li><a href="/cv">.cv</a></li>
+      </ul>
+      <!-- <div id="contact"></div> -->
+
+      <style lang="scss">
+        $primary-color: black;
+        $text-color: white;
+        $hover-color: #333;
+        $transition-timing: 0.5s linear;
+        $mobile-breakpoint: 768px;
+
+        @mixin transition {
+          transition: $transition-timing;
+          -o-transition: $transition-timing;
+          -ms-transition: $transition-timing;
+          -moz-transition: $transition-timing;
+          -webkit-transition: $transition-timing;
+        }
+
+        nav {
+          position: absolute;
+          z-index: 1;
+          top: 0;
+          width: 100%;
+
+          ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+          }
+        }
+
+        a {
+          color: $text-color;
+          text-decoration: none;
+          padding: 0.5rem;
+          display: inline-block;
+
+          font-family: "Fragment Mono", serif;
+          font-weight: 400;
+          font-style: normal;
+          font-size: large;
+
+          &:hover {
+            color: $hover-color;
+          }
+        }
+
+        #nav-collapsed {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+
+          #nav-submenu {
+            display: flex;
+            // background-color: $primary-color;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2rem;
+            // padding: 1rem 0;
+          }
+        }
+
+        #nav-sublinks {
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
+          align-self: flex-start;
+
+          li {
+            // padding: 0.25rem 0;
+          }
+        }
+
+        #contact {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          padding: 1rem 0;
+        }
+
+        #cta {
+          flex-shrink: 0;
+          color: $text-color;
+          border: none;
+          border-radius: 5px;
+          font-size: xx-large;
+          cursor: pointer;
+          background-color: $primary-color;
+          padding: 0.5rem 1rem;
+          align-self: flex-end;
+
+          &:hover {
+            color: $hover-color;
+          }
+        }
+
+        #navbar {
+          display: none;
+
+          li {
+            padding: 0.5rem 0;
+          }
+        }
+
+        @media screen and (min-width: $mobile-breakpoint) {
+          #navbar {
+            display: flex;
+            flex-direction: row;
+            gap: 1.5rem;
+            align-items: center;
+            padding: 0.5rem 0;
+          }
+
+          #nav-collapsed {
+            display: none;
+          }
+        }
+      </style>
+    </div>
+  </div>
+</nav>

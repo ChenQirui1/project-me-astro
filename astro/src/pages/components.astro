@@ -1,0 +1,100 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ProjectItem from "../components/ProjectItem.astro";
+import GalleryItem from "../components/GalleryItem.astro";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/ui/Footer.astro";
+import { getCollection } from "astro:content";
+
+// Fetch sample data
+const projects = await getCollection("projects");
+const gallery = await getCollection("gallery");
+
+const navItems = [
+  { name: "projects", href: "/projects" },
+  { name: "gallery", href: "/gallery" },
+  { name: "cv/resume", href: "/cv" },
+  { name: "contact", href: "/contact" },
+];
+---
+
+<Layout>
+  <div class="p-8 max-w-7xl mx-auto">
+    <h1 class="text-4xl font-bold mb-12">Component Testing</h1>
+
+    <!-- ProjectItem Component -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-6 border-b pb-4">ProjectItem Component</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {
+          projects.slice(0, 2).map((project) => (
+            <div class="border border-gray-300 p-4 rounded">
+              <ProjectItem project={project} />
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- GalleryItem Component -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-6 border-b pb-4">GalleryItem Component</h2>
+
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold mb-4">Full Display</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {
+            gallery.slice(0, 2).map((item) => (
+              <div class="border border-gray-300 p-4 rounded">
+                <GalleryItem
+                  title={item.data.title}
+                  description={item.data.description}
+                  medium={item.data.medium}
+                  year={item.data.year}
+                  image={item.data.image}
+                  compact={false}
+                />
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Compact Display</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {
+            gallery.slice(0, 4).map((item) => (
+              <div class="border border-gray-300 p-2 rounded">
+                <GalleryItem
+                  title={item.data.title}
+                  description={item.data.description}
+                  medium={item.data.medium}
+                  year={item.data.year}
+                  image={item.data.image}
+                  compact={true}
+                />
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Component Info -->
+    <section class="mb-16 bg-gray-100 p-6 rounded">
+      <h2 class="text-2xl font-bold mb-4">Testing Info</h2>
+      <ul class="space-y-2 text-sm">
+        <li><strong>Projects loaded:</strong> {projects.length}</li>
+        <li><strong>Gallery items loaded:</strong> {gallery.length}</li>
+        <li><strong>Page generated:</strong> {new Date().toLocaleString()}</li>
+      </ul>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  section {
+    scroll-margin-top: 100px;
+  }
+</style>

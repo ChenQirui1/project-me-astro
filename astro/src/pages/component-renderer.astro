@@ -1,0 +1,184 @@
+---
+import { experimental_AstroContainer } from "astro/container";
+import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+// Get query parameters
+const url = Astro.url;
+const selectedComponent = url.searchParams.get("component") || "ProjectItem";
+const propsJson = url.searchParams.get("props") || "{}";
+
+// Available components to test
+const componentMap = {
+  ProjectItem: () => import("../components/ProjectItem.astro"),
+  GalleryItem: () => import("../components/GalleryItem.astro"),
+  Navbar: () => import("../components/Navbar.astro"),
+  Footer: () => import("../components/ui/Footer.astro"),
+};
+
+// Sample data for components
+const projects = await getCollection("projects");
+const gallery = await getCollection("gallery");
+
+// Default props for each component
+const defaultProps: Record<string, any> = {
+  ProjectItem: { project: projects[0] },
+  GalleryItem: gallery[0]
+    ? {
+        title: gallery[0].data.title,
+        description: gallery[0].data.description,
+        medium: gallery[0].data.medium,
+        year: gallery[0].data.year,
+        image: gallery[0].data.image,
+        compact: false,
+      }
+    : {},
+  Navbar: {
+    items: [
+      { name: "projects", href: "/projects" },
+      { name: "gallery", href: "/gallery" },
+    ],
+  },
+  Footer: {},
+};
+
+// Parse props from query string or use defaults
+let props = defaultProps[selectedComponent] || {};
+try {
+  const parsedProps = JSON.parse(propsJson);
+  if (Object.keys(parsedProps).length > 0) {
+    props = { ...props, ...parsedProps };
+  }
+} catch (e) {
+  // Use default props if parsing fails
+}
+
+// Render component using Container API
+let renderedHtml = "";
+let error = "";
+
+try {
+  const container = await experimental_AstroContainer.create();
+  const componentModule =
+    await componentMap[selectedComponent as keyof typeof componentMap]();
+  renderedHtml = await container.renderToString(componentModule.default, {
+    props,
+  });
+} catch (e) {
+  error = e instanceof Error ? e.message : String(e);
+}
+---
+
+<Layout>
+  <div class="min-h-screen bg-black p-8">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-4xl font-bold mb-8">Component Renderer</h1>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Control Panel -->
+        <div class="lg:col-span-1">
+          <div class="bg-black rounded-lg shadow p-6 sticky top-8">
+            <h2 class="text-2xl font-bold mb-4">Controls</h2>
+
+            <form method="get" class="space-y-4">
+              <!-- Component Selection -->
+              <div>
+                <label class="block text-sm font-medium mb-2">
+                  Select Component
+                </label>
+                <select
+                  name="component"
+                  class="w-full bg-gray-900 border border-gray-700 text-white rounded px-3 py-2"
+                >
+                  {
+                    Object.keys(componentMap).map((name) => (
+                      <option
+                        value={name}
+                        selected={name === selectedComponent}
+                      >
+                        {name}
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              <!-- Props Input -->
+              <div>
+                <label class="block text-sm font-medium mb-2">
+                  Props (JSON)
+                </label>
+                <textarea
+                  name="props"
+                  rows="10"
+                  class="w-full bg-gray-900 border border-gray-700 text-white rounded px-3 py-2 font-mono text-sm"
+                  placeholder='{"key": "value"}'>{propsJson}</textarea
+                >
+              </div>
+
+              <button
+                type="submit"
+                class="w-full bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700"
+              >
+                Render Component
+              </button>
+            </form>
+
+            <!-- Default Props Reference -->
+            <div class="mt-6 pt-6 border-t border-gray-700">
+              <h3 class="text-sm font-bold mb-2">Default Props:</h3>
+              <pre
+                class="text-xs bg-gray-900 text-gray-300 p-3 rounded overflow-auto max-h-64">{JSON.stringify(defaultProps[selectedComponent], null, 2)}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Rendered Output -->
+          <div class="bg-black rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4">Preview</h2>
+
+            {
+              error ? (
+                <div class="bg-red-950 border border-red-800 rounded p-4 text-red-300">
+                  <strong>Error:</strong> {error}
+                </div>
+              ) : (
+                <div class="border border-gray-700 rounded p-4 bg-black">
+                  <Fragment set:html={renderedHtml} />
+                </div>
+              )
+            }
+          </div>
+
+          <!-- HTML Output -->
+          <!-- <div class="bg-black rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4">Generated HTML</h2>
+            <pre
+              class="bg-gray-900 text-green-400 p-4 rounded overflow-auto text-sm max-h-96"><code>{renderedHtml || error}</code></pre>
+          </div> -->
+
+          <!-- Props Used -->
+          <div class="bg-black rounded-lg shadow p-6">
+            <h2 class="text-2xl font-bold mb-4">Props Used</h2>
+            <pre
+              class="bg-gray-900 text-gray-300 p-4 rounded overflow-auto text-sm">{JSON.stringify(props, null, 2)}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+</style>

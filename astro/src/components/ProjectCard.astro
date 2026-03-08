@@ -1,0 +1,44 @@
+---
+// src/components/ProjectCard.astro
+import { Image } from "astro:assets";
+import { urlFor } from "../lib/sanity";
+interface Props {
+  title: string;
+  image: any;
+  description: string;
+}
+
+const { title, image, description } = Astro.props;
+
+const imageUrl = urlFor(image).width(800).url();
+---
+
+<article class="flex flex-col border border-neutral-500 mb-8 font-mono">
+  <div class="grid grid-cols-2 border-b border-neutral-500">
+    <div
+      class="bg-neutral-200 text-black p-2 text-sm border-r border-neutral-500"
+    >
+      {title}
+    </div>
+    <div class="bg-black"></div>
+  </div>
+
+  <div class="p-3 border-b border-neutral-500 bg-black">
+    <!-- <img src={image} alt={title} class="w-full h-auto block object-cover" /> -->
+    <Image
+      src={imageUrl}
+      alt={title}
+      width={400}
+      height={300}
+      class="w-full h-auto block object-cover"
+    />
+
+    <div
+      class="p-4 border-b border-neutral-500 bg-black text-white text-sm leading-relaxed"
+    >
+      <p>{description}</p>
+    </div>
+
+    <div class="h-1.5 bg-black"></div>
+  </div>
+</article>

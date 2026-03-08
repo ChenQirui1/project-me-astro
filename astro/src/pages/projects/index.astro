@@ -1,0 +1,37 @@
+---
+import { getProjects } from "../../lib/sanity";
+import Layout from "../../layouts/Layout.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+
+const projects = await getProjects();
+---
+
+<Layout>
+  <div id="container">
+    <section class="px-8 pt-10 pb-2">
+      <div class="max-w-[90%] mx-auto">
+        {
+          projects.map((project) => (
+            <a
+              href={`/projects/${project.projectId}`}
+              class="block no-underline"
+            >
+              <ProjectCard
+                title={project.title}
+                image={project.thumbnail}
+                description={project.description}
+              />
+            </a>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  /* Smooth scrolling for anchor links */
+  html {
+    scroll-behavior: smooth;
+  }
+</style>

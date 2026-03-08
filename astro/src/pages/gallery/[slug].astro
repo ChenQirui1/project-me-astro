@@ -1,0 +1,207 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+export async function getStaticPaths() {
+  const galleryItems = await getCollection("gallery");
+  return galleryItems.map((item) => ({
+    params: { slug: item.id },
+    props: { item },
+  }));
+}
+
+type Props = {
+  item: CollectionEntry<"gallery">;
+};
+
+const { item } = Astro.props;
+const { Content } = await item.render();
+---
+
+<Layout title={item.data.title}>
+  <main class="gallery-detail">
+    <div class="container">
+      <a href="/gallery" class="back-link">← back to gallery</a>
+
+      <div class="image-section">
+        <img
+          src={item.data.image}
+          alt={item.data.title}
+          class="main-image"
+        />
+      </div>
+
+      <div class="info-section">
+        <h1 class="title">{item.data.title}</h1>
+
+        <div class="meta">
+          <span class="caption">{item.data.caption}</span>
+          <div class="details">
+            <span class="medium">{item.data.medium}</span>
+            <span class="year">{item.data.year}</span>
+          </div>
+        </div>
+
+        <div class="description">
+          <p>{item.data.description}</p>
+        </div>
+
+        <div class="content">
+          <Content />
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .gallery-detail {
+    padding: 2rem 0;
+    min-height: calc(100vh - 4rem);
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    color: #495057;
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: 2rem;
+  }
+
+  .back-link:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+  }
+
+  .image-section {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .main-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .info-section {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1a1a1a;
+  }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .caption {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #666;
+  }
+
+  .details {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .medium,
+  .year {
+    font-size: 0.95rem;
+    color: #999;
+  }
+
+  .medium {
+    font-weight: 500;
+  }
+
+  .description {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: #444;
+    margin-bottom: 2rem;
+  }
+
+  .content {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #555;
+  }
+
+  .content :global(h2) {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: #2a2a2a;
+  }
+
+  .content :global(h3) {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: #3a3a3a;
+  }
+
+  .content :global(p) {
+    margin-bottom: 1.25rem;
+  }
+
+  .content :global(ul),
+  .content :global(ol) {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .content :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .content :global(strong) {
+    font-weight: 600;
+    color: #2a2a2a;
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 1rem;
+    }
+
+    .title {
+      font-size: 2rem;
+    }
+
+    .meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .description {
+      font-size: 1rem;
+    }
+  }
+</style>

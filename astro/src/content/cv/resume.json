@@ -1,0 +1,124 @@
+{
+  "personalInfo": {
+    "name": "Chen Qirui",
+    "email": "ivanchen.code@gmail.com",
+    "phone": "(+65) 8866 8119",
+    "socials": {
+      "linkedin": "https://linkedin.com/in/yourprofile",
+      "github": "https://github.com/yourusername"
+    }
+  },
+  "about": {
+    "headline": "Interaction Design Student focusing on human-centered AI systems",
+    "bio": "My journey began with a strong interest in computer vision and AI. While working with data and AI systems, I recognized the critical importance of addressing how we interact with these technologies. This realization led to a change of heart—I shifted my focus to designing AI systems through a human-centered lens, ensuring that technology serves people in meaningful and intuitive ways.",
+    "philosophy": "With experience working as a developer, I understand how systems are designed and built. I believe the best solutions emerge when user needs are thoughtfully balanced with system requirements. By understanding these trade-offs, I can deliver software that works well for users while remaining simpler to develop. My focus lies in creating products with exceptional usability and technical simplicity, then iterating with clever designs and thoughtful refinements.",
+    "availability": "Currently open to internships, research positions, and collaborative opportunities in interaction design and human-AI systems."
+  },
+  "education": [
+    {
+      "institution": "Nanyang Technological University",
+      "degree": "B.F.A Interaction Design",
+      "period": "Aug 2024 - Present",
+      "highlights": []
+    },
+    {
+      "institution": "Dunman High School",
+      "degree": "A' Levels",
+      "period": "2021",
+      "highlights": []
+    }
+  ],
+  "experience": [
+    {
+      "company": "Home Team Science and Technology (HTX)",
+      "position": "AI/ML Intern",
+      "period": "Mar 2024 - Aug 2024",
+      "responsibilities": [
+        {
+          "details": [
+            "Evaluated computer vision models for person and vehicle Re-ID using datasets (Veri-776)",
+            "Built person Re-ID prototype using React, FastAPI, and Milvus vector database"
+          ]
+        }
+      ]
+    },
+    {
+      "company": "Singapore Civil Defence Force",
+      "position": "Data Analytics Specialist (NS)",
+      "period": "Feb 2022 - Feb 2024",
+      "responsibilities": [
+        {
+          "details": [
+            "Developed Tableau dashboard for Emergency Behavioural Science & Care Unit",
+            "Performed data analysis using pandas, matplotlib, seaborn on emergency services data"
+          ]
+        }
+      ]
+    },
+    {
+      "company": "Fundigo Pte Ltd",
+      "position": "Laravel Developer",
+      "period": "Nov 2022 - Jan 2023",
+      "responsibilities": [
+        {
+          "details": [
+            "Implemented backend API updates for crowdfunding platform"
+          ]
+        }
+      ]
+    }
+  ],
+  "competitions": [
+    {
+      "name": "MLWEEK 2025",
+      "achievement": "Best Freshman Team",
+      "details": []
+    },
+    {
+      "name": "TIL AI 2025",
+      "achievement": "Top 50",
+      "details": []
+    }
+  ],
+  "activities": [],
+  "skills": {
+    "technical": [
+      {
+        "category": "Languages",
+        "items": ["Python", "JavaScript", "PHP", "C#", "SQL"]
+      },
+      {
+        "category": "ML/AI",
+        "items": ["PyTorch", "Scikit-learn", "Pandas", "NumPy"]
+      },
+      {
+        "category": "Web",
+        "items": ["React", "Vue", "Flask", "FastAPI", "Laravel"]
+      },
+      {
+        "category": "Tools",
+        "items": ["Git", "Tableau", "Unity", "Milvus", "VS Code", "Arduino"]
+      },
+      {
+        "category": "Platforms",
+        "items": ["Next.js", "Astro", "Supabase", "Docker"]
+      }
+    ],
+    "aesthetic": [
+      "Adobe Creative Suite",
+      "Figma",
+      "TouchDesigner"
+    ],
+    "soft": [
+      "Problem solving",
+      "Collaboration",
+      "Creativity"
+    ]
+  },
+  "interests": [
+    "Deep Learning",
+    "Museums",
+    "Breakdancing",
+    "DJ/VJ"
+  ]
+}

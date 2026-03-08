@@ -1,0 +1,46 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import GalleryMasonry from "../../components/GalleryMasonry.astro";
+---
+
+<Layout>
+  <div id="container">
+    <main class="p-2 md:p-8">
+      <div class="w-full max-w-[1200px] my-0 mx-auto">
+        <section
+          id="gallery-section"
+          class="flex flex-col gap-2 scroll-mt-24 md:scroll-mt-20 px-8"
+        >
+          <GalleryMasonry />
+        </section>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  /* Smooth scrolling for anchor links */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar styling - Tailwind doesn't fully support this yet */
+  .project-items::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .project-items::-webkit-scrollbar-thumb {
+    background-image: linear-gradient(white 50%, transparent 0%);
+    background-size: 2px 25px;
+    background-repeat: repeat-y;
+    background-position: center;
+  }
+
+  .project-items::-webkit-scrollbar-thumb:hover {
+    background: #90ee90;
+  }
+
+  .project-items::-webkit-scrollbar-thumb:active {
+    background: #32cd32;
+  }
+</style>

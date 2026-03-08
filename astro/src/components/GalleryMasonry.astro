@@ -1,0 +1,105 @@
+---
+import { getCollection } from "astro:content";
+
+const galleryItems = await getCollection("gallery");
+const sortedItems = galleryItems.sort((a, b) => (a.data.order || 0) - (b.data.order || 0));
+
+// Map aspect ratio to Tailwind class
+const aspectRatioClass = (ratio: string) => {
+  switch (ratio) {
+    case '3x4': return 'aspect-[3/4]';
+    case '4x3': return 'aspect-[4/3]';
+    case '1x1': return 'aspect-square';
+    case '16x9': return 'aspect-video';
+    default: return 'aspect-[4/3]';
+  }
+};
+---
+
+<div class="gallery-grid after:content-[''] after:block after:clear-both">
+  <div class="gutter-sizer w-[4%] md:w-[2%] lg:w-[1%] xl:w-[1%]"></div>
+  <div class="grid-sizer w-[48%] md:w-[32%] lg:w-[24%] xl:w-[19%] float-left"></div>
+  {
+    sortedItems.map((item) => (
+      <div class={`grid-item w-[48%] md:w-[32%] lg:w-[24%] xl:w-[19%] float-left mb-6 overflow-hidden ${aspectRatioClass(item.data.aspectRatio)}`}>
+        <a
+          href={`/gallery/${item.id}`}
+          class="block no-underline w-full h-full overflow-hidden transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] group"
+        >
+          <div class="relative w-full h-full overflow-hidden border border-white">
+            <img
+              src={item.data.image}
+              alt={item.data.title}
+              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <span class="text-white text-sm font-medium">{item.data.caption}</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    ))
+  }
+</div>
+
+<script>
+  import Masonry from "masonry-layout";
+
+  function initMasonry() {
+    const grid = document.querySelector(".gallery-grid");
+
+    if (grid) {
+      // Wait for images to load before initializing masonry
+      const images = grid.querySelectorAll("img");
+      let loadedCount = 0;
+      const totalImages = images.length;
+
+      if (totalImages === 0) {
+        // No images, initialize immediately
+        createMasonry();
+        return;
+      }
+
+      images.forEach((img) => {
+        if (img.complete) {
+          loadedCount++;
+          if (loadedCount === totalImages) {
+            createMasonry();
+          }
+        } else {
+          img.addEventListener("load", () => {
+            loadedCount++;
+            if (loadedCount === totalImages) {
+              createMasonry();
+            }
+          });
+        }
+      });
+
+      function createMasonry() {
+        const msnry = new Masonry(grid, {
+          gutter: ".gutter-sizer",
+          columnWidth: ".grid-sizer",
+          itemSelector: ".grid-item",
+          percentPosition: true,
+          transitionDuration: "0.3s",
+        });
+
+        // Re-layout after initialization
+        setTimeout(() => {
+          if (msnry) {
+            msnry.layout();
+          }
+        }, 100);
+      }
+    }
+  }
+
+  // Initialize on page load
+  initMasonry();
+
+  // Re-initialize after view transitions
+  document.addEventListener("astro:page-load", initMasonry);
+</script>
+

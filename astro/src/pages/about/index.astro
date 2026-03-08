@@ -1,0 +1,313 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import cvData from "../../content/cv/resume.json";
+
+const {
+  personalInfo,
+  about,
+  education,
+  experience,
+  competitions,
+  activities,
+  skills,
+  interests,
+} = cvData;
+---
+
+<Layout>
+  <div id="container">
+    <main class="p-2 md:p-8">
+      <div class="w-full max-w-[900px] my-0 mx-auto px-8">
+        <div class="flex justify-end mb-8 pb-4 border-b-2 border-gray-200">
+          <a
+            href="/cv/Chen_Qirui_Resume.pdf"
+            download
+            class="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg font-medium transition-all hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-lg"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download CV
+          </a>
+        </div>
+
+        <article class="resume-content">
+          {
+            about && (
+              <section class="mb-12">
+                {/* Section Title */}
+                <div class="font-mono text-xl mb-10">
+                  <p>.about</p>
+                </div>
+
+                {/* About Information */}
+                <div class="space-y-3.5 text-xs mb-10 font-sans">
+                  <div>
+                    <p class="text-black/60 mb-1">name</p>
+                    <p class="text-black">{personalInfo.name}</p>
+                  </div>
+
+                  <div>
+                    <p class="text-black/60 mb-1">contact/email</p>
+                    <p class="text-black">{personalInfo.email}</p>
+                  </div>
+
+                  <div>
+                    <p class="text-black/60 mb-1">mobile</p>
+                    <p class="text-black">{personalInfo.phone}</p>
+                  </div>
+
+                  {
+                    personalInfo.socials && (
+                      <div>
+                        <p class="text-black/60 mb-1">links</p>
+                        <div class="space-y-1">
+                          {personalInfo.socials.linkedin && (
+                            <p>
+                              <a
+                                href={personalInfo.socials.linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-black hover:underline"
+                              >
+                                LinkedIn: {personalInfo.socials.linkedin.replace('https://', '')}
+                              </a>
+                            </p>
+                          )}
+                          {personalInfo.socials.github && (
+                            <p>
+                              <a
+                                href={personalInfo.socials.github}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-black hover:underline"
+                              >
+                                GitHub: {personalInfo.socials.github.replace('https://', '')}
+                              </a>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  <div>
+                    <p class="text-black/60 mb-1">headline</p>
+                    <p class="text-black leading-relaxed">{about.headline}</p>
+                  </div>
+
+                  <div>
+                    <p class="text-black/60 mb-1">background</p>
+                    <p class="text-black leading-relaxed">{about.bio}</p>
+                  </div>
+
+                  <div>
+                    <p class="text-black/60 mb-1">design philosophy</p>
+                    <p class="text-black leading-relaxed">{about.philosophy}</p>
+                  </div>
+
+                  {about.availability && (
+                    <div>
+                      <p class="text-black/60 mb-1">availability</p>
+                      <p class="text-black leading-relaxed">{about.availability}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Skills & Interests */}
+                <div class="space-y-3.5 text-xs">
+                  <div>
+                    <p class="text-black/60 mb-1">skills</p>
+                    <p class="text-black leading-relaxed">
+                      {
+                        skills.technical
+                          .flatMap((skill) => skill.items)
+                          .join(", ")
+                      }
+                      {skills.aesthetic && skills.aesthetic.length > 0 && `, ${skills.aesthetic.join(", ")}`}
+                    </p>
+                  </div>
+
+                  {
+                    interests && interests.length > 0 && (
+                      <div>
+                        <p class="text-black/60 mb-1">interests</p>
+                        <p class="text-black leading-relaxed">
+                          {interests.join(", ")}
+                        </p>
+                      </div>
+                    )
+                  }
+                </div>
+              </section>
+            )
+          }
+
+          <section class="mb-12">
+            <div class="font-mono text-xl mb-10">
+              <p>.education</p>
+            </div>
+            {
+              education.map((edu) => (
+                <div class="mb-6 text-xs">
+                  <h3 class="!text-sm !font-semibold !mb-2 !font-sans">{edu.institution}</h3>
+                  <p class="mb-1 text-black">
+                    <strong>{edu.degree}</strong> | <em class="text-black/60">{edu.period}</em>
+                  </p>
+                  {edu.highlights && edu.highlights.length > 0 && (
+                    <ul class="!text-xs">
+                      {edu.highlights.map((highlight) => (
+                        <li class="text-black">{highlight}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))
+            }
+          </section>
+
+          <section class="mb-12">
+            <div class="font-mono text-xl mb-10">
+              <p>.experience</p>
+            </div>
+            {
+              experience.map((exp) => (
+                <div class="mb-6 text-xs">
+                  <h3 class="!text-sm !font-semibold !mb-2 !font-sans">{exp.company}</h3>
+                  <p class="mb-2 text-black">
+                    <strong>{exp.position}</strong> | <em class="text-black/60">{exp.period}</em>
+                  </p>
+                  {exp.responsibilities.map((resp) => (
+                    <div class="mb-4">
+                      {resp.title && (
+                        <p class="!mb-1 text-black">
+                          <strong>{resp.title}</strong>
+                        </p>
+                      )}
+                      <ul class="!text-xs">
+                        {resp.details.map((detail) => (
+                          <li class="text-black">{detail}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              ))
+            }
+          </section>
+
+          <section class="mb-12">
+            <div class="font-mono text-xl mb-10">
+              <p>.competitions</p>
+            </div>
+            {
+              competitions &&
+                competitions.map((comp) => (
+                  <div class="mb-6 text-xs">
+                    <h3 class="!text-sm !font-semibold !mb-2 !font-sans">{comp.name}</h3>
+                    <p class="!mb-2 text-black">
+                      <strong>{comp.achievement}</strong>
+                    </p>
+                    {comp.details && comp.details.length > 0 && (
+                      <ul class="!text-xs">
+                        {comp.details.map((detail) => (
+                          <li class="text-black">{detail}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))
+            }
+          </section>
+
+          {
+            activities && activities.length > 0 && (
+              <section class="mb-12">
+                <div class="font-mono text-xl mb-10">
+                  <p>.activities</p>
+                </div>
+                {activities.map((activity) => (
+                  <div class="mb-6 text-xs">
+                    <h3 class="!text-sm !font-semibold !mb-2 !font-sans">
+                      {activity.organization}
+                    </h3>
+                    <ul class="!text-xs">
+                      {activity.details.map((detail) => (
+                        <li class="text-black">{detail}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </section>
+            )
+          }
+
+        </article>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .resume-content :global(h3) {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: #000;
+    font-family: sans-serif;
+  }
+
+  .resume-content :global(p) {
+    margin-bottom: 0.25rem;
+    color: #000;
+    line-height: 1.6;
+    font-size: 0.75rem;
+    font-family: sans-serif;
+  }
+
+  .resume-content :global(strong) {
+    font-weight: 600;
+    color: #000;
+  }
+
+  .resume-content :global(em) {
+    color: rgba(0, 0, 0, 0.6);
+    font-style: italic;
+  }
+
+  .resume-content :global(ul) {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+    list-style-type: disc;
+    font-size: 0.75rem;
+  }
+
+  .resume-content :global(li) {
+    margin-bottom: 0.25rem;
+    color: #000;
+    line-height: 1.6;
+  }
+
+  .resume-content :global(a) {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .resume-content :global(a:hover) {
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,78 @@
+---
+import { ClientRouter } from "astro:transitions";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/ui/Footer.astro";
+import "../styles/tailwind.css";
+import { slide } from "astro:transitions";
+import Header from "../components/ui/Header.astro";
+import Nav from "../components/ui/Nav.astro";
+
+const navItems = [
+  { name: "projects", href: "/projects" },
+  { name: "gallery", href: "/gallery" },
+  { name: "cv/resume", href: "/cv" },
+  { name: "contact", href: "/contact" },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Project Me</title>
+    <ClientRouter />
+  </head>
+  <body class="m-4 border h-full overflow-y-auto">
+    <Header />
+    <div id="divider" class="h-10 border-b"></div>
+    <Nav
+      class="fixed top-0 w-full z-50 bg-black"
+      activePath={Astro.url.pathname}
+    />
+    <div
+      id="container"
+      class="flex-1 pb-24 overflow-y-scroll h-[calc(100vh-4rem)] mt-16"
+      transition:animate={slide({ duration: "0.4s" })}
+    >
+      <slot />
+    </div>
+  </body>
+</html>
+
+<script>
+  // Set up navigation direction tracking
+  function setupNavigationTracking() {
+    const previousLink = document.getElementById("previous-page-link");
+    const nextLink = document.getElementById("next-page-link");
+
+    if (previousLink) {
+      previousLink.addEventListener("click", () => {
+        document.documentElement.classList.add("back-nav");
+      });
+    }
+
+    if (nextLink) {
+      nextLink.addEventListener("click", () => {
+        document.documentElement.classList.remove("back-nav");
+      });
+    }
+  }
+
+  // Run on initial page load
+  setupNavigationTracking();
+
+  // Re-run after each page transition
+  document.addEventListener("astro:page-load", () => {
+    setupNavigationTracking();
+  });
+
+  // Clean up the class after transition completes
+  document.addEventListener("astro:after-swap", () => {
+    // Remove the class after a short delay to ensure transition is complete
+    setTimeout(() => {
+      document.documentElement.classList.remove("back-nav");
+    }, 350);
+  });
+</script>

@@ -1,0 +1,130 @@
+---
+import Socials from "./Socials.astro";
+
+const navigation = [
+  { href: "/", text: "Home" },
+  // { href: "/projects", text: ".projects" },
+  // { href: "/gallery", text: ".gallery" },
+  // { href: "/archive", text: ".archive" },
+  { href: "/cv", text: ".cv" },
+];
+
+const { pathname } = Astro.url;
+console.log("Current page in Navbar:", pathname);
+---
+
+<nav class="sticky top-0 z-10 bg-black w-full">
+  <!-- Desktop Navigation -->
+  <ul id="navbar" class="hidden md:flex md:flex-row md:gap-6 list-none">
+    {
+      navigation.map(({ href, text }) => (
+        <li>
+          <a
+            href={href}
+            class="nav-link text-white text-lg"
+            data-section={href.slice(1) || "home"}
+          >
+            {text}
+          </a>
+        </li>
+      ))
+    }
+    <div id="socials">
+      <Socials />
+    </div>
+  </ul>
+
+  <!-- Mobile/Collapsed Navigation -->
+
+  <div
+    id="nav-collapsed"
+    class="flex flex-col gap-10 w-full p-4 md:hidden group"
+  >
+    <header class="flex">
+      <div class="mr-auto">
+        <h2>RUI</h2>
+      </div>
+      <button
+        id="cta"
+        class="flex-shrink-0 text-white border-none rounded bg-black p-0 text-2xl cursor-pointer hover:text-gray-700 transition-colors duration-500"
+        ><h2>GET IN TOUCH</h2></button
+      >
+    </header>
+
+    <div id="page-heading" class="flex items-center">
+      <!-- > symbol -->
+      <!-- <a class="menu transition-transform duration-500 group-hover:rotate-90">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="size-6"
+          width="24"
+          height="24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="m8.25 4.5 7.5 7.5-7.5 7.5"></path>
+        </svg>
+      </a> -->
+      <a href={`/${pathname}`} id="current-page-link" class="text-white text-lg"
+        >.{pathname}</a
+      >
+    </div>
+
+    <!-- <div id="nav-submenu">
+      <ul id="nav-sublinks">
+        {
+          navigation.map(({ href, text }) => (
+            <li>
+              <a
+                href={href}
+                class="nav-sublink"
+                data-section={href.slice(1) || "home"}
+              >
+                {text}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+   -->
+  </div>
+</nav>
+
+<script>
+  const sections = document.querySelectorAll("section");
+  const currentPageLink = document.getElementById("current-page-link");
+
+  const observerOptions = {
+    root: null,
+    rootMargin: "0px 0px -90% 0px",
+
+    threshold: 0,
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const sectionId = entry.target.id;
+
+        // Update the current page link text and href
+        if (currentPageLink) {
+          currentPageLink.textContent = `.${sectionId}`;
+          currentPageLink.href = `/${sectionId}`;
+        }
+      }
+    });
+  }, observerOptions);
+
+  // Observe all sections
+  sections.forEach((section) => {
+    if (section) {
+      observer.observe(section);
+    }
+  });
+</script>

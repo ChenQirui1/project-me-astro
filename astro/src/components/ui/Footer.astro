@@ -1,0 +1,97 @@
+---
+import ArrowBack from "../../assets/icons/arrow_back.svg";
+import ArrowForward from "../../assets/icons/arrow_forward.svg";
+
+type NavItem = {
+  name: string;
+  href: string;
+};
+
+interface Props {
+  navList: NavItem[];
+}
+
+const { navList }: Props = Astro.props;
+
+const currentPath = Astro.url.pathname;
+console.log("Current path:", currentPath);
+console.log("Nav list:", navList);
+
+const currentPageIndex = navList.findIndex(
+  (item: NavItem) => item.href === currentPath,
+);
+
+console.log("Current page index in Footer:", currentPageIndex);
+const previousPage =
+  currentPageIndex > 0 ? navList[currentPageIndex - 1] : null;
+const nextPage =
+  currentPageIndex < navList.length - 1 ? navList[currentPageIndex + 1] : null;
+
+console.log("Previous page:", previousPage);
+console.log("Next page:", nextPage);
+---
+
+<section id="footer" class="w-full bg-black">
+  <div
+    id="link-groups"
+    class="grid grid-cols-2 gap-24 my-4 px-10 text-gray-500"
+  >
+    <!-- back link -->
+
+    <div class="flex flex-col">
+      {
+        previousPage && (
+          <>
+            <ArrowBack
+              class="size-6 self-end text-gray-500"
+              width="24"
+              height="24"
+            />
+            <a
+              id="previous-page-link"
+              class="text-lg text-end"
+              href={previousPage.href}
+            >
+              {previousPage.name}
+            </a>
+          </>
+        )
+      }
+    </div>
+
+    <!-- forward link -->
+    <div>
+      {
+        nextPage && (
+          <>
+            <ArrowForward
+              class="size-6 self-end text-gray-500"
+              width="24"
+              height="24"
+            />
+            <a id="next-page-link" class="text-lg" href={nextPage.href}>
+              {nextPage.name}
+            </a>
+          </>
+        )
+      }
+    </div>
+  </div>
+
+  <style>
+    #intro {
+      position: absolute;
+      /* line-height: 0.8; */
+      bottom: -1em;
+      /* align-items: last baseline; */
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    svg {
+      fill: #6b7280; /* gray-500 */
+    }
+  </style>
+</section>

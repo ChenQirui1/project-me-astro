@@ -1,0 +1,163 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout>
+  <div id="container">
+    <main class="p-2 md:p-8">
+      <div class="w-full max-w-[600px] my-0 mx-auto px-8">
+        <div class="mb-8">
+          <h1 class="text-4xl font-bold mb-4 text-gray-900">Get in Touch</h1>
+          <p class="text-gray-600">
+            Have a question or want to work together? Feel free to reach out!
+          </p>
+        </div>
+
+        <form id="contact-form" class="space-y-6">
+          <div id="form-message" class="hidden p-4 rounded-lg"></div>
+
+          <div class="space-y-2">
+            <label for="name" class="block text-sm font-medium text-gray-700 uppercase">
+              Name
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+              placeholder="Your name"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="email" class="block text-sm font-medium text-gray-700 uppercase">
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+              placeholder="your.email@example.com"
+            />
+            <p id="email-error" class="hidden text-sm text-red-600">Please enter a valid email address</p>
+          </div>
+
+          <div class="space-y-2">
+            <label for="inquiry" class="block text-sm font-medium text-gray-700 uppercase">
+              Message
+            </label>
+            <textarea
+              id="inquiry"
+              name="inquiry"
+              rows="6"
+              required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all resize-none"
+              placeholder="Tell me about your project or inquiry..."
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition-all hover:shadow-lg uppercase tracking-wide"
+          >
+            Send Message
+          </button>
+        </form>
+
+        <div class="mt-12 pt-8 border-t border-gray-200">
+          <h2 class="text-xl font-semibold mb-4 text-gray-900">Other Ways to Connect</h2>
+          <div class="space-y-3 text-gray-700">
+            <p>
+              <strong>Email:</strong> <a href="mailto:ivanchen.code@gmail.com" class="text-blue-600 hover:underline">ivanchen.code@gmail.com</a>
+            </p>
+            <p>
+              <strong>Phone:</strong> <a href="tel:+6588668119" class="text-blue-600 hover:underline">(+65) 8866 8119</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement;
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const emailError = document.getElementById('email-error') as HTMLElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const formMessage = document.getElementById('form-message') as HTMLElement;
+
+  // Email validation
+  function validateEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  // Real-time email validation
+  emailInput?.addEventListener('blur', () => {
+    if (emailInput.value && !validateEmail(emailInput.value)) {
+      emailError.classList.remove('hidden');
+      emailInput.classList.add('border-red-500');
+    } else {
+      emailError.classList.add('hidden');
+      emailInput.classList.remove('border-red-500');
+    }
+  });
+
+  // Form submission
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Validate email
+    if (!validateEmail(emailInput.value)) {
+      emailError.classList.remove('hidden');
+      emailInput.classList.add('border-red-500');
+      emailInput.focus();
+      return;
+    }
+
+    // Get form data
+    const formData = new FormData(form);
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const inquiry = formData.get('inquiry') as string;
+
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+
+    // Create mailto link
+    const subject = encodeURIComponent(`Contact Form: Message from ${name}`);
+    const body = encodeURIComponent(
+      `Name: ${name}\nEmail: ${email}\n\nMessage:\n${inquiry}`
+    );
+    const mailtoLink = `mailto:ivanchen.code@gmail.com?subject=${subject}&body=${body}`;
+
+    // Open email client
+    window.location.href = mailtoLink;
+
+    // Show success message
+    formMessage.textContent = 'Opening your email client...';
+    formMessage.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+    formMessage.classList.add('bg-green-100', 'text-green-700');
+
+    // Reset form after a delay
+    setTimeout(() => {
+      form.reset();
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Message';
+      formMessage.classList.add('hidden');
+    }, 3000);
+  });
+</script>
+
+<style>
+  html {
+    scroll-behavior: smooth;
+  }
+</style>

@@ -5,6 +5,7 @@
     "phone": "(+65) 8866 8119",
     "socials": {
       "linkedin": "https://linkedin.com/in/yourprofile",
+      "instagram": "https://instagram.com/yourhandle",
       "github": "https://github.com/yourusername"
     }
   },
@@ -85,7 +86,7 @@
     "technical": [
       {
         "category": "Languages",
-        "items": ["Python", "JavaScript", "PHP", "C#", "SQL"]
+        "items": ["Python", "JavaScript", "PHP", "SQL"]
       },
       {
         "category": "ML/AI",
@@ -93,15 +94,15 @@
       },
       {
         "category": "Web",
-        "items": ["React", "Vue", "Flask", "FastAPI", "Laravel"]
+        "items": ["React", "FastAPI", "Laravel"]
       },
       {
         "category": "Tools",
-        "items": ["Git", "Tableau", "Unity", "Milvus", "VS Code", "Arduino"]
+        "items": ["Git", "Tableau", "Unity", "Arduino"]
       },
       {
         "category": "Platforms",
-        "items": ["Next.js", "Astro", "Supabase", "Docker"]
+        "items": ["Next.js", "Astro.js", "Supabase", "Docker"]
       }
     ],
     "aesthetic": [
@@ -116,9 +117,9 @@
     ]
   },
   "interests": [
-    "Deep Learning",
-    "Museums",
-    "Breakdancing",
-    "DJ/VJ"
+    "Human-Computer Interaction",
+    "Human-Centred AI",
+    "Human-Robot Interaction",
+    "Deep Learning"
   ]
 }

@@ -1,222 +1,164 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { getProjectIds, getProjectByProjectId, urlFor } from "../../lib/sanity";
-import type { SanityProject } from "../../lib/sanity";
+import { getCollection, render } from "astro:content";
+import { asset } from "../../lib/assets";
 
 export async function getStaticPaths() {
-  const projectIds = await getProjectIds();
-  return projectIds.map((projectId) => ({
-    params: { slug: projectId },
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
   }));
 }
 
-interface Props {
-  project?: SanityProject;
-}
+const { project } = Astro.props;
+const { Content } = await render(project);
 
-const { slug } = Astro.params;
-const project = await getProjectByProjectId(slug || "");
+// The split "Design | Engineering" tag strip. Confluence-synced projects carry
+// a disciplines list; hand-authored ones carry a comma-separated `medium`.
+const mediums =
+  project.data.disciplines.length > 0
+    ? project.data.disciplines
+    : project.data.medium
+      ? project.data.medium.split(",").map((m) => m.trim())
+      : [];
 
-if (!project) {
-  return Astro.redirect("/projects");
-}
+// What kind of project this is, shown above the year. Synced pages rarely fill
+// in a project type, so fall back to where the page sits in the Confluence tree.
+const kind =
+  project.data.projectType ?? project.data.subcategory ?? project.data.category;
+
+// Catalogue facts worth showing, skipping anything the page hasn't filled in.
+// Type is left out: it already heads the page beside the title.
+const facts = [
+  ["context", project.data.context],
+  ["status", project.data.status],
+  ["role", project.data.role],
+  ["collaborators", project.data.collaborators.join(", ") || null],
+].filter(([, value]) => Boolean(value)) as [string, string][];
+
+const projects = (await getCollection("projects")).sort(
+  (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0),
+);
+const currentIndex = projects.findIndex((p) => p.id === project.id);
+const prevId = projects[(currentIndex - 1 + projects.length) % projects.length].id;
+const nextId = projects[(currentIndex + 1) % projects.length].id;
 ---
 
-<Layout title={project.title}>
-  <!-- <Navbar /> -->
-  <main class="project-detail">
-    <div class="container">
-      <a href="/#projects-section" class="back-link">← .back</a>
-      <header class="project-header">
-        <h1>{project.title}</h1>
-        <div class="project-meta">
-          <span class="year">{project.year}</span>
-          <span class="medium">{project.medium}</span>
-        </div>
-      </header>
+<Layout title={project.data.title}>
+  <article class="mx-auto w-full max-w-[820px] p-4 sm:p-8">
+    {/* Back Link — lands on this project's card in the catalogue */}
+    <div class="mb-4">
+      <a
+        href={`/projects#${project.id}`}
+        class="btn btn-ghost min-h-0 px-2 py-1 text-micro"
+      >
+        ← back to projects
+      </a>
+    </div>
 
+    {/* Title Block (Matches: [TEST] horse) — year over type at the far right,
+        sitting on the title plate's baseline */}
+    <div class="flex items-end justify-between gap-4">
+      <h1 class="h2 inline-block bg-ink px-3 py-2 text-paper-pure uppercase">
+        {project.data.title}
+      </h1>
+      <div class="flex shrink-0 flex-col items-end pb-2 text-right">
+        <span class="h3 text-ink">{project.data.year}</span>
+        {kind && <span class="label text-grey-600">{kind}</span>}
+      </div>
+    </div>
+
+    {/* Main Image — never taller than 16:9 of the column, so it lands above the
+        fold: wider images show whole, taller ones are cropped from the top.
+        A dashed skeleton holds the slot when the project has no hero yet. */}
+    <div class="@container mb-8">
       {
-        project.thumbnail && (
-          <div class="project-image">
-            <img
-              src={urlFor(project.thumbnail).width(800).url()}
-              alt={project.title}
-              class="main-image"
-            />
+        project.data.thumbnail ? (
+          <img
+            src={asset(project.data.thumbnail)}
+            alt={project.data.title}
+            class="block max-h-[56.25cqw] w-full border border-ink object-cover object-top"
+          />
+        ) : (
+          <div class="grid-lines flex aspect-video w-full items-center justify-center border border-dashed border-ink">
+            <span class="micro text-grey-500">no hero media</span>
           </div>
         )
       }
 
-      <div class="project-content">
-        <div class="description">
-          <p>{project.description}</p>
-        </div>
+      {/* Medium / Tags — boxed chips captioning the image */}
+      {
+        mediums.length > 0 && (
+          <ul class="mt-3 flex flex-wrap gap-2">
+            {mediums.map((m) => (
+              <li class="tag">{m}</li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
 
-        {
-          project.body && Array.isArray(project.body) && (
-            <div class="content">
-              {project.body.map((block: any) => {
-                if (block._type === "block") {
-                  return (
-                    <p>
-                      {block.children?.map((child: any) => child.text).join("")}
-                    </p>
-                  );
-                }
-                if (block._type === "image") {
-                  return (
-                    <figure class="body-image">
-                      <img
-                        src={urlFor(block).width(800).url()}
-                        alt={block.alt || ""}
-                      />
-                      {block.caption && (
-                        <figcaption>{block.caption}</figcaption>
-                      )}
-                    </figure>
-                  );
-                }
-              })}
+    {/* Content Area */}
+    <div class="flex flex-col gap-8">
+      {/* Description */}
+      {
+        project.data.description && (
+          <p class="prose border-l-2 border-ink pl-4 text-reading">
+            {project.data.description}
+          </p>
+        )
+      }
+
+      {/* Body content */}
+      <div class="copy">
+        <Content />
+      </div>
+
+      {/* Media gallery — attachments mirrored out of Confluence into R2 */}
+      {
+        project.data.gallery.length > 0 && (
+          <div class="border-t-2 border-ink pt-6">
+            <h2 class="label mb-4 inline-block bg-ink px-2 py-1 text-paper-pure">
+              media
+            </h2>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {project.data.gallery.map((item) => (
+                <img
+                  src={asset(item)}
+                  alt=""
+                  loading="lazy"
+                  class="block w-full border border-ink"
+                />
+              ))}
             </div>
-          )
-        }
+          </div>
+        )
+      }
+
+      {/* Catalogue record */}
+      {
+        facts.length > 0 && (
+          <dl class="grid grid-cols-[auto_1fr] border-t-2 border-b border-ink">
+            {facts.map(([label, value]) => (
+              <>
+                <dt class="label border-b border-grey-200 py-2 pr-6 text-grey-600 last:border-b-0">
+                  {label}
+                </dt>
+                <dd class="data border-b border-grey-200 py-2 text-ink last:border-b-0">
+                  {value}
+                </dd>
+              </>
+            ))}
+          </dl>
+        )
+      }
+
+      {/* Prev / Next */}
+      <div class="flex justify-between gap-4 border-t border-ink pt-6">
+        <a href={`/projects/${prevId}`} class="btn btn-ghost">← prev</a>
+        <a href={`/projects/${nextId}`} class="btn btn-ghost">next →</a>
       </div>
     </div>
-  </main>
+  </article>
 </Layout>
-
-<style>
-  .project-detail {
-    padding: 2rem 0;
-    min-height: calc(100vh - 4rem);
-  }
-
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
-
-  .project-header {
-    margin-bottom: 3rem;
-    text-align: center;
-  }
-
-  .project-header h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: #333;
-  }
-
-  .project-meta {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .project-meta span {
-    font-size: 1.1rem;
-    color: #666;
-  }
-
-  .year {
-    font-weight: 600;
-  }
-
-  .medium {
-    font-style: italic;
-  }
-
-  .project-image {
-    margin-bottom: 3rem;
-    text-align: center;
-  }
-
-  .main-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .project-content {
-    margin-bottom: 3rem;
-  }
-
-  .description {
-    font-size: 1.2rem;
-    line-height: 1.6;
-    color: #555;
-    margin-bottom: 2rem;
-  }
-
-  .content {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    color: #444;
-  }
-
-  .content :global(h1),
-  .content :global(h2),
-  .content :global(h3) {
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    color: #333;
-  }
-
-  .content :global(p) {
-    margin-bottom: 1.5rem;
-  }
-
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
-    /* background: #f8f9fa; */
-    color: #495057;
-    text-decoration: none;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .back-link:hover {
-    background: #e9ecef;
-    transform: translateY(-1px);
-  }
-
-  .body-image {
-    margin: 2rem 0;
-    text-align: center;
-  }
-
-  .body-image img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .body-image figcaption {
-    font-size: 0.95rem;
-    color: #666;
-    margin-top: 0.75rem;
-    font-style: italic;
-  }
-
-  @media (max-width: 768px) {
-    .container {
-      padding: 0 1rem;
-    }
-
-    .project-header h1 {
-      font-size: 2.5rem;
-    }
-
-    .project-meta {
-      gap: 1rem;
-    }
-  }
-</style>

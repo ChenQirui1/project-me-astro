@@ -6,28 +6,37 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "preview:cf": "astro build && wrangler dev",
+    "astro": "astro",
+    "test": "node --test \"scripts/*.test.mjs\"",
+    "assets:push": "node scripts/assets.mjs push",
+    "assets:pull": "node scripts/assets.mjs pull",
+    "sync:confluence": "node scripts/sync-confluence.mjs",
+    "deploy": "astro build && wrangler deploy",
+    "build:ci": "pnpm sync:confluence && pnpm assets:push && pnpm build"
   },
   "dependencies": {
-    "@astrojs/mdx": "^4.3.6",
+    "@astrojs/mdx": "4.3.13",
     "@astrojs/react": "^4.4.2",
-    "@sanity/astro": "^3.2.11",
-    "@sanity/client": "^7.15.0",
-    "@sanity/image-url": "^2.0.3",
     "@tailwindcss/vite": "^4.1.14",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "astro": "^5.1.1",
+    "astro": "^5.18.0",
     "masonry-layout": "^4.2.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-is": "^19.2.4",
-    "sanity": "^5.11.0",
     "sass": "^1.83.0",
     "styled-components": "^6.3.11",
-    "tailwindcss": "^4.1.14"
+    "tailwindcss": "^4.1.14",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
-    "@types/masonry-layout": "^4.2.8"
-  }
+    "@cloudflare/workers-types": "^5.20260812.1",
+    "@types/masonry-layout": "^4.2.8",
+    "sharp": "^0.34.5",
+    "wrangler": "^4.121.0"
+  },
+  "packageManager": "pnpm@10.33.0"
 }

@@ -1,0 +1,742 @@
+/* ---------------------------------------------------------------------------
+   GFX EXP — design tokens.
+
+   Ported from the "GFX EXP — UI elements" sheet (Claude Design artifact
+   7796e640). The :root blocks are the sheet's values verbatim; the @layer
+   base/components blocks below are this site's adaptation of them.
+
+   The system in one line: a print-label kit. The page is ink black and shows
+   through between panels as a 4px gutter; panels are paper; everything is
+   square, framed in hairlines, and changes state by inverting rather than
+   fading or lifting.
+--------------------------------------------------------------------------- */
+
+/* Fonts and the type scale (below) sit in @theme rather than :root because
+   their names are Tailwind's own `--font-*` / `--text-*` namespaces: one
+   definition sets the variable and generates `font-mono`, `text-h2`, etc. */
+@theme static {
+  --font-display: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-script: "Ms Madi", cursive;
+}
+
+:root {
+  /* --- Base ink + paper ------------------------------------------------ */
+  --ink: #000000;
+  --ink-soft: #141414;
+  --paper: #efefec;
+  --paper-pure: #ffffff;
+  --paper-dim: #dededa;
+  --paper-shade: #c9c9c4;
+
+  /* --- Greys (hairlines + secondary text) ------------------------------ */
+  --grey-900: #1c1c1c;
+  --grey-800: #2b2b2b;
+  --grey-700: #3d3d3d;
+  --grey-600: #565656;
+  --grey-500: #6e6e6e;
+  --grey-400: #8c8c8c;
+  --grey-300: #a8a8a8;
+  --grey-200: #c4c4c4;
+
+  /* --- Blue ramp: the [A1]-[A5] swatch scale from the source sheet ----- */
+  --blue-a1: #9cafd5;
+  --blue-a2: #8099cb;
+  --blue-a3: #6684bf;
+  --blue-a4: #4c6cac;
+  --blue-a5: #37599c;
+  --blue-signal: #2b4bb0;
+
+  /* --- Alert colours: used as flat fills only, never gradients --------- */
+  --yellow: #f3d200;
+  --red: #dc1e14;
+
+  /* --- Semantic aliases ------------------------------------------------ */
+  --surface-page: var(--ink);
+  --surface-panel: var(--paper);
+  --surface-panel-pure: var(--paper-pure);
+  --surface-panel-invert: var(--ink);
+  --surface-field: var(--paper-pure);
+  --surface-field-dim: var(--paper-dim);
+
+  --text-primary: var(--ink);
+  /* Body copy, everywhere. Pure ink on paper is ~18:1, which tires the eye
+     over paragraphs; grey-700 is 9.4:1 on paper (10.9:1 on paper-pure), still
+     past WCAG AAA's 7:1. Plates, labels and titles stay on --text-primary. */
+  --text-reading: var(--grey-700);
+  --text-muted: var(--grey-600);
+  --text-invert: var(--paper-pure);
+  --text-invert-muted: var(--grey-400);
+
+  --border: var(--ink);
+  --border-soft: var(--grey-200);
+  --border-invert: var(--grey-700);
+
+  --accent: var(--blue-a5);
+  --accent-contrast: var(--paper-pure);
+  --warning: var(--yellow);
+  --danger: var(--red);
+
+  --selection-bg: var(--yellow);
+  --selection-fg: var(--ink);
+}
+
+:root {
+  /* One knob for the size of the whole site. Type, spacing, padding and
+     control heights multiply by it, and so does the root font size (see
+     `html` below), which carries Tailwind's rem utilities along. Hairlines,
+     the focus ring and the fill textures stay at their drawn size. */
+  --scale: 1.25;
+}
+
+@theme static {
+  /* --- Scale (px at 1x — this is a print-label system, not fluid web) --- */
+  --text-nano: calc(7px * var(--scale));
+  --text-micro: calc(8px * var(--scale));
+  --text-label: calc(9px * var(--scale));
+  --text-caption: calc(10px * var(--scale));
+  --text-body: calc(11px * var(--scale));
+  --text-body-lg: calc(13px * var(--scale));
+  --text-lede: calc(15px * var(--scale));
+  --text-h3: calc(20px * var(--scale));
+  --text-h2: calc(30px * var(--scale));
+  --text-h1: calc(46px * var(--scale));
+  --text-display: calc(72px * var(--scale));
+  --text-display-xl: calc(116px * var(--scale));
+}
+
+:root {
+  /* --- Weight ---------------------------------------------------------- */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-black: 800;
+
+  /* --- Tracking: tiny type opens up, display type closes in ------------ */
+  --track-display: -0.035em;
+  --track-heading: -0.02em;
+  --track-body: 0em;
+  --track-label: 0.06em;
+  --track-micro: 0.1em;
+
+  /* --- Leading --------------------------------------------------------- */
+  --leading-display: 0.86;
+  --leading-heading: 1;
+  --leading-body: 1.35;
+  --leading-label: 1.2;
+
+  /* --- Composite roles ------------------------------------------------- */
+  --type-display: var(--weight-black) var(--text-display) / var(--leading-display) var(--font-display);
+  --type-h1: var(--weight-black) var(--text-h1) / var(--leading-heading) var(--font-display);
+  --type-h2: var(--weight-bold) var(--text-h2) / var(--leading-heading) var(--font-display);
+  --type-h3: var(--weight-bold) var(--text-h3) / var(--leading-heading) var(--font-display);
+  --type-body: var(--weight-regular) var(--text-body) / var(--leading-body) var(--font-ui);
+  --type-label: var(--weight-bold) var(--text-label) / var(--leading-label) var(--font-ui);
+  --type-data: var(--weight-medium) var(--text-caption) / var(--leading-label) var(--font-mono);
+}
+
+:root {
+  /* Dense 2px-based ladder — label panels are packed, not airy. */
+  --space-0: 0px;
+  --space-1: calc(2px * var(--scale));
+  --space-2: calc(4px * var(--scale));
+  --space-3: calc(6px * var(--scale));
+  --space-4: calc(8px * var(--scale));
+  --space-5: calc(10px * var(--scale));
+  --space-6: calc(14px * var(--scale));
+  --space-7: calc(20px * var(--scale));
+  --space-8: calc(28px * var(--scale));
+  --space-9: calc(40px * var(--scale));
+  --space-10: calc(64px * var(--scale));
+
+  /* Gap between tiled panels — the black page shows through as a gutter. */
+  --gutter: calc(4px * var(--scale));
+  --gutter-tight: calc(2px * var(--scale));
+
+  /* Panel padding presets */
+  --pad-panel: calc(8px * var(--scale)) calc(10px * var(--scale));
+  --pad-panel-tight: calc(4px * var(--scale)) calc(6px * var(--scale));
+  --pad-panel-loose: calc(14px * var(--scale)) calc(16px * var(--scale));
+
+  /* Fixed row heights keep stacked field rows on a common rhythm. */
+  --row-h: calc(18px * var(--scale));
+  --row-h-lg: calc(24px * var(--scale));
+  --control-h: calc(22px * var(--scale));
+  --control-h-lg: calc(28px * var(--scale));
+}
+
+:root {
+  /* Everything is square: `--radius` is pinned to 0 in tailwind.css's @theme. */
+
+  --hairline-w: 1px;
+  --frame-w: 2px;
+  --rule-w: 1px;
+
+  --hairline: var(--hairline-w) solid var(--border);
+  --hairline-soft: var(--hairline-w) solid var(--border-soft);
+  --hairline-invert: var(--hairline-w) solid var(--border-invert);
+  --frame: var(--frame-w) solid var(--border);
+  --dashed: var(--hairline-w) dashed var(--border);
+
+  /* No shadow system. Depth is expressed by inversion, not elevation. */
+  --shadow-none: none;
+  --focus-ring: 2px solid var(--accent);
+  --focus-offset: 1px;
+}
+
+:root {
+  /* Flat repeating fills — hazard tape, screentone, rules. No gradients. */
+  --hazard-ink: repeating-linear-gradient(-45deg, var(--ink) 0 6px, transparent 6px 12px);
+  --hazard-red: repeating-linear-gradient(-45deg, var(--red) 0 7px, var(--paper-pure) 7px 14px);
+  --hazard-yellow: repeating-linear-gradient(-45deg, var(--ink) 0 8px, var(--yellow) 8px 16px);
+  --tone-50: repeating-linear-gradient(0deg, var(--ink) 0 1px, transparent 1px 3px);
+  --grid-4: repeating-linear-gradient(0deg, var(--border-soft) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, var(--border-soft) 0 1px, transparent 1px 4px);
+  --perforation: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 6px);
+}
+
+:root {
+  /* Motion is mechanical: instant inversions, stepped ticks, no easing curves
+     that imply softness. Nothing bounces, nothing fades in on load. */
+  --dur-instant: 0ms;
+  --dur-fast: 80ms;
+  --dur-base: 140ms;
+  --transition-invert: background-color var(--dur-fast) var(--ease-linear),
+    color var(--dur-fast) var(--ease-linear),
+    border-color var(--dur-fast) var(--ease-linear);
+}
+
+/* ---------------------------------------------------------------------------
+   Base.
+
+   Deviation from the sheet: the sheet's specimen gives every <a> an accent
+   colour and an underline, which is right for a spec page and wrong for a site
+   made of block links (cards, nav rows, tiles). Links inherit here, and inline
+   prose links opt back in via .link.
+--------------------------------------------------------------------------- */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Tailwind's rem utilities (p-4, gap-6, w-56, max-w-2xl…) scale with this.
+       Breakpoints don't: media-query rems always use the browser's 16px. */
+    font-size: calc(100% * var(--scale));
+    background: var(--surface-page);
+  }
+
+  body {
+    margin: 0;
+    background: var(--surface-page);
+    color: var(--text-invert);
+    font: var(--type-body);
+    letter-spacing: var(--track-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--selection-bg);
+    color: var(--selection-fg);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+    font-family: var(--font-display);
+    letter-spacing: var(--track-heading);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  :focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-offset);
+  }
+
+  /* The page shows through as gutter, so scrollbars stay part of the page. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--grey-700) var(--ink);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Components. Every one of these is a token composition — no new values.
+--------------------------------------------------------------------------- */
+
+@layer components {
+  /* --- Surfaces -------------------------------------------------------- */
+
+  /* A sheet of paper on the black page. The default content surface. */
+  .panel {
+    background: var(--surface-panel);
+    color: var(--text-primary);
+    border: var(--hairline);
+  }
+
+  .panel-pure {
+    background: var(--surface-panel-pure);
+    color: var(--text-primary);
+    border: var(--hairline);
+  }
+
+  /* The inverse: ink panel, hairline in grey so the edge reads on black. */
+  .panel-invert {
+    background: var(--surface-panel-invert);
+    color: var(--text-invert);
+    border: var(--hairline-invert);
+  }
+
+  /* Header strip inside a panel — an ink bar carrying a label. */
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-height: var(--row-h-lg);
+    padding: var(--pad-panel-tight);
+    background: var(--ink);
+    color: var(--text-invert);
+  }
+
+  /* --- Type roles ------------------------------------------------------ */
+
+  .display {
+    font: var(--type-display);
+    letter-spacing: var(--track-display);
+    text-transform: uppercase;
+  }
+
+  .h1 {
+    font: var(--type-h1);
+    letter-spacing: var(--track-heading);
+  }
+
+  .h2 {
+    font: var(--type-h2);
+    letter-spacing: var(--track-heading);
+  }
+
+  .h3 {
+    font: var(--type-h3);
+    letter-spacing: var(--track-heading);
+  }
+
+  /* Body copy. The sheet's 11px body is a print size; web prose steps up to
+     the lede role, with body-lg for secondary copy. */
+  .prose {
+    font-family: var(--font-ui);
+    font-size: var(--text-lede);
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-body);
+  }
+
+  .body {
+    font-family: var(--font-ui);
+    font-size: var(--text-body-lg);
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-body);
+  }
+
+  /* The workhorse: the small bold caps that name every panel and control. */
+  .label {
+    font: var(--type-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  /* Smaller still — stamps, serial numbers, corner marks. */
+  .micro {
+    font-family: var(--font-ui);
+    font-size: var(--text-micro);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-label);
+    letter-spacing: var(--track-micro);
+    text-transform: uppercase;
+  }
+
+  /* Mono, for anything that is a value rather than a word. */
+  .data {
+    font: var(--type-data);
+    letter-spacing: var(--track-label);
+  }
+
+  .script {
+    font-family: var(--font-script);
+    font-weight: var(--weight-regular);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  /* --- Controls -------------------------------------------------------- */
+
+  /* Ink block that inverts to hazard yellow on hover — the sheet's link
+     behaviour promoted to the primary control gesture. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--control-h-lg);
+    padding: var(--space-2) var(--space-6);
+    border: var(--hairline);
+    background: var(--ink);
+    color: var(--text-invert);
+    font: var(--type-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition-invert);
+  }
+
+  .btn:hover {
+    background: var(--yellow);
+    color: var(--ink);
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-color: var(--accent);
+  }
+
+  .btn-accent:hover {
+    background: var(--yellow);
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  /* Outlined variant for secondary actions on a paper panel. */
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  .btn-ghost:hover {
+    background: var(--ink);
+    color: var(--text-invert);
+  }
+
+  /* A boxed word: discipline tags, topic chips, status flags. */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--row-h);
+    padding: var(--space-1) var(--space-3);
+    border: var(--hairline);
+    background: transparent;
+    color: var(--text-primary);
+    font: var(--type-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    transition: var(--transition-invert);
+  }
+
+  .tag:hover {
+    background: var(--ink);
+    color: var(--text-invert);
+  }
+
+  /* A tag used as a toggle (filter chips): pressed holds the inverted state. */
+  button.tag {
+    cursor: pointer;
+  }
+
+  .tag[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--text-invert);
+  }
+
+  /* Stacked disclosure rows on native <details>: hairline-ruled, the summary
+     takes the hazard-yellow hover, and the open row's summary inverts to ink
+     so it reads as the selected record. */
+  .accordion {
+    border-top: var(--hairline);
+    border-bottom: var(--hairline);
+  }
+
+  .accordion-item + .accordion-item {
+    border-top: var(--hairline);
+  }
+
+  .accordion-summary {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    color: var(--text-primary);
+    cursor: pointer;
+    list-style: none;
+    transition: var(--transition-invert);
+  }
+
+  .accordion-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .accordion-summary:hover {
+    background: var(--yellow);
+    color: var(--ink);
+  }
+
+  .accordion-item[open] > .accordion-summary {
+    background: var(--ink);
+    color: var(--text-invert);
+  }
+
+  /* The +/− mark, drawn from state so no script is needed. */
+  .accordion-summary::after {
+    content: "+";
+    flex-shrink: 0;
+    width: 1ch;
+    font: var(--type-data);
+    text-align: center;
+  }
+
+  .accordion-item[open] > .accordion-summary::after {
+    content: "−";
+  }
+
+  .accordion-body {
+    padding: var(--space-5) var(--space-5) var(--space-6);
+  }
+
+  /* Inline text link — the sheet's underlined accent link, kept for prose. */
+  .link {
+    color: var(--accent);
+    border-bottom: var(--hairline-w) solid currentColor;
+    transition: var(--transition-invert);
+  }
+
+  .link:hover {
+    color: var(--ink);
+    background: var(--yellow);
+  }
+
+  /* --- Fields ---------------------------------------------------------- */
+
+  .field {
+    width: 100%;
+    min-height: var(--control-h-lg);
+    padding: var(--space-3) var(--space-4);
+    border: var(--hairline);
+    border-radius: var(--radius);
+    background: var(--surface-field);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--text-body-lg);
+    line-height: var(--leading-body);
+  }
+
+  .field::placeholder {
+    color: var(--grey-400);
+  }
+
+  .field:focus {
+    outline: var(--focus-ring);
+    outline-offset: 0;
+    background: var(--paper-pure);
+  }
+
+  /* --- Fills ----------------------------------------------------------- */
+
+  /* Hazard tape. Used as a rule, never as a background behind text. */
+  .hazard {
+    background: var(--hazard-yellow);
+    background-size: 22.7px 22.7px;
+  }
+
+  .hazard-red {
+    background: var(--hazard-red);
+  }
+
+  .perforation {
+    background: var(--perforation);
+    background-size: 6px 1px;
+  }
+
+  /* 4px engineering grid, for the empty half of a panel. */
+  .grid-lines {
+    background-image: var(--grid-4);
+  }
+
+  /* --- Behaviour ------------------------------------------------------- */
+
+  /* Paper -> ink on hover. The system's one and only state change. */
+  .hover-invert {
+    transition: var(--transition-invert);
+  }
+
+  .hover-invert:hover {
+    background: var(--ink);
+    color: var(--text-invert);
+    border-color: var(--ink);
+  }
+
+  /* --- Prose ----------------------------------------------------------- */
+
+  /* Rendered Markdown inside a paper panel. */
+  .copy {
+    font-family: var(--font-ui);
+    font-size: var(--text-lede);
+    line-height: var(--leading-body);
+    color: var(--text-reading);
+  }
+
+  .copy > * + * {
+    margin-top: var(--space-6);
+  }
+
+  .copy h1,
+  .copy h2,
+  .copy h3 {
+    display: inline-block;
+    margin-top: var(--space-9);
+    padding: var(--space-1) var(--space-3);
+    background: var(--ink);
+    color: var(--text-invert);
+    font: var(--type-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  .copy h1:first-child,
+  .copy h2:first-child,
+  .copy h3:first-child {
+    margin-top: 0;
+  }
+
+  /* A body section: its <h2> plus the copy under it (rehype-sections.mjs).
+     Stacked by default; spacing mirrors the flat `.copy > * + *` rhythm. */
+  .copy > .copy-section {
+    margin-top: var(--space-9);
+  }
+
+  .copy > .copy-section:first-child {
+    margin-top: 0;
+  }
+
+  .copy-section-body {
+    margin-top: var(--space-6);
+  }
+
+  .copy-section-body > * + * {
+    margin-top: var(--space-6);
+  }
+
+  /* With room beside the reading column, the heading hangs in a rail to its
+     left and stays pinned while its section scrolls past. The text column
+     keeps its place; only the rail reaches into the margin. Measured on the
+     scrolling panel, not the viewport, since the side nav eats into it. */
+  @container main (min-width: 1180px) {
+    .copy-section {
+      --rail: 176px;
+      --rail-gap: var(--space-8);
+      display: grid;
+      grid-template-columns: var(--rail) minmax(0, 1fr);
+      column-gap: var(--rail-gap);
+      margin-left: calc(-1 * (var(--rail) + var(--rail-gap)));
+    }
+
+    .copy-section > h2 {
+      position: sticky;
+      top: var(--space-6);
+      align-self: start;
+      justify-self: end;
+      text-align: right;
+    }
+
+    .copy-section-body {
+      margin-top: 0;
+    }
+  }
+
+  .copy a {
+    color: var(--accent);
+    border-bottom: var(--hairline-w) solid currentColor;
+    transition: var(--transition-invert);
+  }
+
+  .copy a:hover {
+    color: var(--ink);
+    background: var(--yellow);
+  }
+
+  .copy ul,
+  .copy ol {
+    padding-left: var(--space-7);
+  }
+
+  .copy li + li {
+    margin-top: var(--space-2);
+  }
+
+  .copy ul {
+    list-style: square;
+  }
+
+  .copy img {
+    display: block;
+    width: 100%;
+    border: var(--hairline);
+  }
+
+  /* Images placed back to back share a paragraph; keep the copy's rhythm
+     between them rather than letting the frames touch. */
+  .copy img + img {
+    margin-top: var(--space-6);
+  }
+
+  .copy blockquote {
+    margin: 0;
+    padding-left: var(--space-6);
+    border-left: var(--frame);
+    color: var(--text-muted);
+  }
+
+  .copy code {
+    padding: 0 var(--space-1);
+    background: var(--paper-shade);
+    font-family: var(--font-mono);
+    font-size: var(--text-body-lg);
+  }
+
+  .copy pre {
+    margin: 0;
+    padding: var(--pad-panel);
+    border: var(--hairline);
+    background: var(--paper-pure);
+    overflow-x: auto;
+  }
+
+  .copy pre code {
+    padding: 0;
+    background: none;
+  }
+
+  .copy hr {
+    height: 0;
+    border: 0;
+    border-top: var(--frame);
+  }
+}

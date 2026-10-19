@@ -1,48 +1,215 @@
-# Astro Starter Kit: Basics
+# project-me
 
-```sh
-npm create astro@latest -- --template basics
+Personal site — Astro, statically built, deployed to Cloudflare Workers.
+Images live in R2; projects are authored in Confluence and published selectively.
+
+## Commands
+
+| Command                | Action                                                        |
+| :--------------------- | :------------------------------------------------------------ |
+| `pnpm dev`             | Dev server at `localhost:4321` (serves `/img/*` from `assets/`) |
+| `pnpm build`           | Static build to `./dist/`                                      |
+| `pnpm preview:cf`      | Build, then serve via `wrangler dev` — exercises the real Worker + R2 binding |
+| `pnpm test`            | Unit tests for the Confluence → Markdown conversion & metadata parsing            |
+| `pnpm sync:confluence` | Pull published Confluence pages into `src/content/projects/`         |
+| `pnpm assets:push`     | Upload changed files in `assets/` to R2                        |
+| `pnpm assets:pull <key>` | Fetch one object out of R2 into `assets/`                    |
+| `pnpm deploy`          | Build and deploy to Cloudflare Workers                         |
+| `pnpm build:ci`        | What Cloudflare runs: sync Confluence, push assets, then build |
+
+Copy `.env.example` to `.env` before running the sync.
+
+## Images (R2)
+
+The bucket `project-me-assets` is **private** — nothing is publicly reachable on
+R2 itself. Every read goes through `worker/index.ts`, the Worker holding the
+only binding to it, which serves same-origin URLs:
+
+```
+assets/projects/clearweb.png   →   r2://project-me-assets/projects/clearweb.png
+                               →   https://<site>/img/projects/clearweb.png
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+`assets/` is the local mirror and the thing you edit; `pnpm assets:push` uploads
+whatever changed, tracked by md5 in a `.manifest.json` key **in the bucket**.
+It lives there rather than in git because `assets/confluence/` is rebuilt from
+Confluence on every build and is no longer committed — a manifest in the repo
+would go stale at once and force a full re-upload each time. `walk()` skips
+dotfiles and the Worker refuses dot-prefixed keys, so it is neither uploaded as
+an asset nor readable at `/img/.manifest.json`.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Reference images through `asset()` from `src/lib/assets.ts`. It maps a content
+key to `/img/...` and passes absolute URLs through untouched, so the gallery's
+Unsplash links keep working:
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+```astro
+import { asset } from "../lib/assets";
+<img src={asset(project.data.thumbnail)} />
+```
 
-## 🚀 Project Structure
+Responses carry `max-age=86400, stale-while-revalidate=604800`. Keys are stable
+paths overwritten in place, so responses are deliberately **not** `immutable` —
+a replaced image propagates within a day rather than being pinned for a year.
+The Worker also honours `Range` and `If-None-Match` (304).
 
-Inside of your Astro project, you'll see the following folders and files:
+The Worker doesn't run under `astro dev`, so `integrations/dev-assets.mjs`
+wires an equivalent `/img/*` route into the dev server reading from `assets/`.
+The same URL therefore works in dev, under `wrangler dev`, and in prod.
+
+## Projects (Confluence)
+
+Confluence is the working archive — every project lives there, however
+unfinished. This site is the **curated publishing layer** on top of it: only
+what you explicitly publish crosses over.
+
+**To publish:** set the page's **status** to `Ready for Publish` — the lozenge
+in the Confluence page header, next to the title. The next run of
+A Confluence automation rule POSTs the Cloudflare deploy hook, which starts a
+build that converts the page to Markdown, mirrors its attachments into R2, and
+deploys. **Change the status** and the project is deleted from the site on the
+next build.
+
+Two separate questions decide what crosses over:
+
+| Question | Answered by |
+| :--- | :--- |
+| Is this a project page at all? | where it sits — only pages under `CONFLUENCE_ROOT` |
+| Is it ready to be seen? | the page status in the page header |
+
+| Page status | Effect |
+| :--- | :--- |
+| `Ready for Publish` | published to the site |
+| `Rough draft`, `In progress`, `Ready for review`, `Verified` | withheld |
+| *(no status)* | withheld — so a new page is safe by default |
+
+Both questions are CQL clauses, so Confluence does the filtering and the sync
+only ever downloads pages that are actually publishable. Notes, templates and
+scratch pages elsewhere in the space are never considered, and the section pages
+(`Creative Works`, `Research`, …) are withheld for free by never carrying the
+status. No labels are involved, and nothing in the page body decides anything.
+
+The status name is exact — it is matched by Confluence, not parsed here — so a
+status that doesn't exist matches nothing and publishes nothing. `pnpm
+sync:confluence --dry-run` lists every page it considered and withheld, which is
+the quickest way to see why something isn't appearing.
+
+**Indexing lag.** CQL reads Confluence's search index, which trails a status
+change by anything from seconds to minutes. A sync started immediately after you
+set a status can still miss it, and the following run picks it up. So if a page
+plainly shows the status in its header but `--dry-run` reports it withheld, wait
+and re-run before going looking for a bug — that gap is expected. `GET
+/rest/api/content/<id>/state` reads live and bypasses the index, which is the
+way to tell the two apart.
+
+**Setup, once:** `Ready for Publish` is a *custom* content state and has to
+exist before it can be set. Confluence ships `Rough draft`, `In progress`,
+`Ready for review` and `Verified`; add `Ready for Publish` in **Space settings →
+Content states** for the Portfolio space. To use one of the built-in states
+instead, point `CONFLUENCE_PUBLISH_STATUS` at it and skip the custom one.
+
+### Metadata block
+
+Put a metadata block at the top of each project page. Either a two-column table
+or labelled lines work, and the bullet style the older pages use is understood
+too:
 
 ```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
+Slug: take-a-seat
+Year: 2023
+Project type: VR artwork
+Discipline: VR, 3D
+Context: Independent
+Status: completed
+Documentation: complete
+Featured: yes
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+Placeholders (`[TBD]`, `n/a`, `—`) count as absent rather than publishing the
+literal text, so a scaffolded page is safe to leave sitting in the tree. The
+block is stripped from the body so it doesn't render twice.
 
-## 🧞 Commands
+Recognized fields: `Slug`, `Year`, `Project type`, `Discipline(s)`, `Context`,
+`Status`, `Documentation`, `Publication`, `Featured`, `Hero media`, `Summary`,
+`Role`, `Collaborators`.
 
-All commands are run from the root of the project, from a terminal:
+Every field here is **descriptive only** — none of them decide what publishes;
+the page status does that, on its own. In particular `Status` means where the
+project itself stands (ongoing, completed, archived, abandoned) and shows up in
+the catalogue record at the bottom of the project page: a completed project can
+sit unpublished, and an ongoing one can be live. `Publication` and
+`Documentation` are recorded in the frontmatter in the same descriptive way.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+`Featured` pins a project to the top of `/projects`. Where the page sits in the
+Confluence tree becomes its `category` / `subcategory` — `Portfolio Home >
+Digital Products > Tools > ClearWeb` yields category "Digital Products",
+subcategory "Tools".
 
-## 👀 Want to learn more?
+### Hand-authored vs synced
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Both live in `src/content/projects/`. A file carrying `confluenceId` in its
+frontmatter is **generated** and will be overwritten; a file without it is
+hand-authored and the sync never touches it.
+
+If a Confluence page's slug collides with a hand-authored file, the sync
+**skips it and says so** rather than overwriting your work. Delete the local
+file to hand that slug over to Confluence.
+
+### How the conversion works
+
+Confluence "storage format" is XHTML carrying namespaced `ac:`/`ri:` elements
+that Turndown can't read. `scripts/confluence-storage.mjs` lowers those to plain
+HTML first — code macros to fenced blocks, info/note/warning panels to
+blockquotes, `ac:image` to `<img>` pointing at the R2 proxy, internal `ac:link`s
+to `/projects/...` when the target is also published (and to plain text when it isn't,
+so unsynced pages never leak a dead link) — and only then runs Turndown.
+
+`pnpm test` covers that conversion with fixtures. Run it before trusting a
+change to the conversion — it is the only guard against a mangled post.
+
+### Running it by hand
+
+```sh
+pnpm sync:confluence --dry-run   # report what would change, write nothing
+pnpm sync:confluence
+pnpm assets:push
+```
+
+## Deployment
+
+Static output served from Cloudflare Workers. `wrangler.jsonc` holds the Worker
+name, the `dist/` assets binding, the `/img/*` `run_worker_first` route, and the
+R2 binding. Every path except `/img/*` is served straight from static assets
+without invoking the Worker at all.
+
+```sh
+pnpm deploy   # build and deploy from your machine
+```
+
+In CI, Cloudflare clones the repo and runs the build itself: `pnpm build:ci`,
+which syncs Confluence, mirrors attachments to R2, then builds. **Synced content
+never enters git** — it exists only in the build container and in the deployed
+output. Confluence stays the archive; the repo stays code and styling.
+
+Two things start a build, and both run that same command, so every deploy
+carries the current code *and* the current Confluence content:
+
+| Trigger | Mechanism |
+| :--- | :--- |
+| Push to `master` | Workers Builds git integration |
+| Confluence publish | A deploy hook — a Confluence automation rule POSTs its URL |
+
+A deploy hook URL *is* its own credential — anyone holding it can start a build,
+so treat it like a password. Hooks are rate limited to 10 builds/minute per
+Worker, and redundant fires are deduped if they land before the first build
+starts.
+
+Required **build** variables, under Settings > Build > Variables and secrets.
+That is a separate namespace from runtime secrets: the sync runs at build time,
+so none of these are bound into the deployed Worker.
+
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CONFLUENCE_BASE_URL`,
+`CONFLUENCE_EMAIL`, `CONFLUENCE_API_TOKEN`, `CONFLUENCE_ROOT`. Optional:
+`CONFLUENCE_PUBLISH_STATUS`, `CONFLUENCE_SPACE_KEY`.
+
+If a build fails — an expired Confluence token, say — the previous deployment
+stays live, so a bad sync can't take the site down.

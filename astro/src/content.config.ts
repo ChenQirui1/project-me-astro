@@ -4,21 +4,48 @@ import { defineCollection, z } from "astro:content";
 // 2. Import loader(s)
 import { glob, file } from "astro/loaders";
 
+// Files carrying `confluenceId` are written by scripts/sync-confluence.mjs and
+// will be overwritten on the next run; files without it are hand-authored and
+// the sync leaves them alone.
 const projectCollection = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/projects" }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    medium: z.string(),
     year: z.number(),
-    status: z.enum(["completed", "ongoing", "paused"]).optional(),
-    thumbnail: z.string(),
+    // Optional because a Confluence page may not have filled these in yet.
+    medium: z.string().optional(),
+    thumbnail: z.string().optional(),
     order: z.number().optional(),
+
+    // Catalogue metadata, read from the block at the top of the Confluence page.
+    projectType: z.string().optional(),
+    disciplines: z.array(z.string()).default([]),
+    context: z.string().optional(),
+    // Free-form rather than an enum: the archive uses ongoing/completed/
+    // archived/abandoned and shouldn't fail a build over a new value.
+    status: z.string().optional(),
+    documentation: z.string().optional(),
+    publication: z.string().optional(),
+    featured: z.boolean().default(false),
+    role: z.string().optional(),
+    collaborators: z.array(z.string()).default([]),
+
+    // Position in the Confluence tree, e.g. "Digital Products" / "Tools".
+    category: z.string().optional(),
+    subcategory: z.string().optional(),
+
+    gallery: z.array(z.string()).default([]),
+    topics: z.array(z.string()).default([]),
+
+    confluenceId: z.string().optional(),
+    confluenceUrl: z.string().url().optional(),
+    sourceUpdatedAt: z.coerce.date().optional(),
   }),
 });
 
 const galleryCollection = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/gallery" }),
   schema: z.object({
     title: z.string(),
     caption: z.string(),
@@ -38,7 +65,18 @@ const cvCollection = defineCollection({
       name: z.string(),
       email: z.string().email(),
       phone: z.string(),
+      socials: z.object({
+        linkedin: z.string().optional(),
+        instagram: z.string().optional(),
+        github: z.string().optional(),
+      }).optional(),
     }),
+    about: z.object({
+      headline: z.string(),
+      bio: z.string(),
+      philosophy: z.string().optional(),
+      availability: z.string().optional(),
+    }).optional(),
     education: z.array(z.object({
       institution: z.string(),
       degree: z.string(),

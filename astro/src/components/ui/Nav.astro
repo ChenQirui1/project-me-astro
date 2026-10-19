@@ -9,78 +9,61 @@ const links = [
 ];
 ---
 
-<div class="flex flex-col">
-  <nav class="grid grid-cols-4 border-b border-neutral-500">
-    {
-      links.map((link) => (
+{/* Narrow: a tab strip. The active tab inverts to paper and carries the
+    hazard-yellow marker — no lifting, no easing. */}
+<nav class="panel-invert grid w-full grid-cols-4 lg:hidden">
+  {
+    links.map((link) => {
+      const isActive = activePath === link.url;
+
+      return (
         <a
           href={link.url}
-          class={`p-2 text-center font-mono text-sm border-r border-neutral-500 last:border-r-0 transition-colors align-middle h-10 ${
-            activePath === link.url
-              ? "bg-neutral-300 text-black"
-              : "text-white hover:bg-neutral-800"
-          }`}
+          aria-current={isActive ? "page" : undefined}
+          class:list={[
+            "label flex flex-col items-center justify-center border-r border-grey-700 px-2 py-3 text-center last:border-r-0",
+            isActive
+              ? "bg-paper text-ink"
+              : "text-paper-pure hover:bg-grey-900",
+          ]}
         >
-          {link.name}
+          <span>{link.name}</span>
+          <span
+            class:list={["mt-2 h-[2px] w-6", isActive ? "bg-warning" : "bg-transparent"]}
+            aria-hidden="true"
+          />
         </a>
-      ))
-    }
-  </nav>
-
-  <div class="grid grid-cols-4 border-b border-neutral-500 h-5">
-    <div class="border-r border-neutral-500"></div>
-    <div class="border-r border-neutral-500"></div>
-    <div class="border-r border-neutral-500"></div>
-    <div></div>
-  </div>
-</div>
-
-<style>
-  html,
-  #nav {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000; /* Ensure it stays above other elements */
+      );
+    })
   }
+</nav>
 
-  /* Forward navigation (default) - slide left */
-  ::view-transition-old(main-content) {
-    animation: 300ms cubic-bezier(0.4, 0, 1, 1) both slide-out-left;
-  }
-  ::view-transition-new(main-content) {
-    animation: 300ms cubic-bezier(0, 0, 0.2, 1) both slide-in-right;
-  }
+{/* Wide: the index column. */}
+<nav class="panel-invert hidden shrink-0 flex-col lg:flex lg:w-40">
+  {
+    links.map((link) => {
+      const isActive = activePath === link.url;
 
-  /* Back navigation - slide right */
-  :root.back-nav ::view-transition-old(main-content) {
-    animation: 300ms cubic-bezier(0.4, 0, 1, 1) both slide-out-right;
-  }
-  :root.back-nav ::view-transition-new(main-content) {
-    animation: 300ms cubic-bezier(0, 0, 0.2, 1) both slide-in-left;
+      return (
+        <a
+          href={link.url}
+          aria-current={isActive ? "page" : undefined}
+          class:list={[
+            "label flex items-center gap-1.5 border-b border-grey-700 px-4 py-4",
+            isActive
+              ? "bg-paper text-ink"
+              : "text-paper-pure hover:bg-grey-900 hover:text-warning",
+          ]}
+        >
+          <span
+            class:list={["h-[6px] w-[6px] shrink-0", isActive ? "bg-ink" : "bg-grey-700"]}
+            aria-hidden="true"
+          />
+          <span>{link.name}</span>
+        </a>
+      );
+    })
   }
 
-  @keyframes slide-out-left {
-    to {
-      transform: translateX(-100%);
-    }
-  }
-
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-    }
-  }
-
-  @keyframes slide-out-right {
-    to {
-      transform: translateX(100%);
-    }
-  }
-
-  @keyframes slide-in-left {
-    from {
-      transform: translateX(-100%);
-    }
-  }
-</style>
+  <div class="grid-lines mt-auto min-h-16 flex-1 opacity-20"></div>
+</nav>

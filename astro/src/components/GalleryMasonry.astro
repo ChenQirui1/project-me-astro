@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { asset } from "../lib/assets";
 
 const galleryItems = await getCollection("gallery");
 const sortedItems = galleryItems.sort((a, b) => (a.data.order || 0) - (b.data.order || 0));
@@ -14,27 +15,34 @@ const aspectRatioClass = (ratio: string) => {
     default: return 'aspect-[4/3]';
   }
 };
+
+// Columns are sized so n tiles plus (n-1) gutters fill the row exactly, with the
+// gutter fixed at the same 1rem as the vertical gap (`mb-4`) between tiles.
+const columnWidth =
+  "w-[calc((100%_-_1rem)/2)] md:w-[calc((100%_-_2rem)/3)] lg:w-[calc((100%_-_3rem)/4)] xl:w-[calc((100%_-_4rem)/5)]";
 ---
 
 <div class="gallery-grid after:content-[''] after:block after:clear-both">
-  <div class="gutter-sizer w-[4%] md:w-[2%] lg:w-[1%] xl:w-[1%]"></div>
-  <div class="grid-sizer w-[48%] md:w-[32%] lg:w-[24%] xl:w-[19%] float-left"></div>
+  <div class="gutter-sizer w-4"></div>
+  <div class={`grid-sizer float-left ${columnWidth}`}></div>
   {
     sortedItems.map((item) => (
-      <div class={`grid-item w-[48%] md:w-[32%] lg:w-[24%] xl:w-[19%] float-left mb-6 overflow-hidden ${aspectRatioClass(item.data.aspectRatio)}`}>
-        <a
-          href={`/gallery/${item.id}`}
-          class="block no-underline w-full h-full overflow-hidden transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(0,0,0,0.15)] group"
-        >
-          <div class="relative w-full h-full overflow-hidden border border-white">
+      <div
+        class={`grid-item float-left mb-4 ${columnWidth} ${aspectRatioClass(item.data.aspectRatio)}`}
+      >
+        <a id={item.id} href={`/gallery/${item.id}`} class="group block h-full w-full scroll-mt-10">
+          {/* Contact-sheet frame: hairline on paper, no shadow, no lift. */}
+          <div class="relative h-full w-full overflow-hidden border border-ink bg-paper-pure">
             <img
-              src={item.data.image}
+              src={asset(item.data.image)}
               alt={item.data.title}
-              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              class="h-full w-full object-cover"
               loading="lazy"
             />
-            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <span class="text-white text-sm font-medium">{item.data.caption}</span>
+            {/* Caption plate. Flat ink, snapped in at 80ms — never faded. */}
+            <div class="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-ink px-2 py-1 opacity-0 transition-opacity duration-[80ms] ease-linear group-hover:opacity-100">
+              <span class="h-[6px] w-[6px] shrink-0 bg-warning" aria-hidden="true" />
+              <span class="label truncate text-paper-pure">{item.data.caption}</span>
             </div>
           </div>
         </a>
@@ -48,58 +56,31 @@ const aspectRatioClass = (ratio: string) => {
 
   function initMasonry() {
     const grid = document.querySelector(".gallery-grid");
+    if (!grid) return;
 
-    if (grid) {
-      // Wait for images to load before initializing masonry
-      const images = grid.querySelectorAll("img");
-      let loadedCount = 0;
-      const totalImages = images.length;
+    // Every tile carries a fixed aspect ratio, so its height is known before
+    // its image arrives — lay out straight away. (Waiting for the images used
+    // to stall forever: lazy images below the fold never load until scrolled
+    // to, so the tiles were left as plain floats with no gutters.)
+    const msnry = new Masonry(grid, {
+      gutter: ".gutter-sizer",
+      columnWidth: ".grid-sizer",
+      itemSelector: ".grid-item",
+      percentPosition: true,
+      transitionDuration: 0,
+    });
 
-      if (totalImages === 0) {
-        // No images, initialize immediately
-        createMasonry();
-        return;
-      }
-
-      images.forEach((img) => {
-        if (img.complete) {
-          loadedCount++;
-          if (loadedCount === totalImages) {
-            createMasonry();
-          }
-        } else {
-          img.addEventListener("load", () => {
-            loadedCount++;
-            if (loadedCount === totalImages) {
-              createMasonry();
-            }
-          });
-        }
-      });
-
-      function createMasonry() {
-        const msnry = new Masonry(grid, {
-          gutter: ".gutter-sizer",
-          columnWidth: ".grid-sizer",
-          itemSelector: ".grid-item",
-          percentPosition: true,
-          transitionDuration: "0.3s",
-        });
-
-        // Re-layout after initialization
-        setTimeout(() => {
-          if (msnry) {
-            msnry.layout();
-          }
-        }, 100);
-      }
-    }
+    // Masonry moves every item, so the browser's jump to a #item from a
+    // detail page's back link lands on the old position. Re-find it once the
+    // layout has settled.
+    msnry.once("layoutComplete", () => {
+      const target =
+        location.hash && document.getElementById(location.hash.slice(1));
+      target?.scrollIntoView({ block: "center" });
+    });
+    msnry.layout();
   }
 
-  // Initialize on page load
-  initMasonry();
-
-  // Re-initialize after view transitions
+  // Fires on the first load too, under the view-transitions router.
   document.addEventListener("astro:page-load", initMasonry);
 </script>
-

@@ -1,7 +1,7 @@
 ---
 import { ClientRouter } from "astro:transitions";
-import LandingNav from "../components/LandingNav.astro";
 import "../styles/tailwind.css";
+import ScrollPager from "../components/ScrollPager.astro";
 ---
 
 <!doctype html>
@@ -11,28 +11,13 @@ import "../styles/tailwind.css";
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>Project Me</title>
+    <title>IVAN.C</title>
     <ClientRouter />
   </head>
-  <body>
-    <div id="container" transition:animate="slide">
+  <body class="min-h-screen bg-ink">
+    <div id="container" transition:animate="none">
       <slot />
     </div>
+    <ScrollPager />
   </body>
 </html>
-
-<style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-  #nav {
-    position: fixed;
-    top: 0;
-    width: 100%;
-  }
-</style>

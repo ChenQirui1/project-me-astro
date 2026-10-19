@@ -1,0 +1,196 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getEntry } from "astro:content";
+
+const resume = await getEntry("cv", "resume");
+if (!resume) throw new Error("cv/resume.json entry not found");
+const { email, socials } = resume.data.personalInfo;
+const availability = resume.data.about?.availability;
+
+// Only the channels that are filled in get a button.
+const elsewhere = [
+  { label: "LinkedIn", href: socials?.linkedin },
+  { label: "GitHub", href: socials?.github },
+  { label: "Instagram", href: socials?.instagram },
+].filter((link): link is { label: string; href: string } => Boolean(link.href));
+---
+
+<Layout title="contact">
+  {/* Same reading column as the about and project pages. On wider screens
+      the form takes the main track and the other channels sit beside it. */}
+  <article class="mx-auto grid w-full max-w-[820px] grid-cols-1 items-start gap-8 p-4 sm:p-8 md:grid-cols-[minmax(0,1fr)_16rem]">
+    {/* Page title, set like the name on the about page, across both columns. */}
+    <div class="md:col-span-2">
+      <h1 class="h2 mb-2 uppercase text-ink">Get in touch</h1>
+      {availability && <p class="body text-grey-600">{availability}</p>}
+    </div>
+
+    <div>
+      <div id="contact-form-wrapper">
+        <form id="contact-form" class="flex flex-col gap-7" novalidate>
+          {/* Name Field */}
+          <div class="relative pt-2">
+            <label for="name" class="label absolute left-2 top-0 z-10 bg-ink px-1 py-[2px] text-paper-pure">
+              NAME
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="who is writing"
+              class="field mt-1"
+            />
+            <span id="name-error" class="data mt-1 hidden text-danger">
+              -- name is required
+            </span>
+          </div>
+
+          {/* Email Field */}
+          <div class="relative pt-2">
+            <label for="email" class="label absolute left-2 top-0 z-10 bg-ink px-1 py-[2px] text-paper-pure">
+              EMAIL
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="where to reply"
+              class="field mt-1"
+            />
+            <span id="email-error" class="data mt-1 hidden text-danger">
+              -- that address looks wrong
+            </span>
+          </div>
+
+          {/* Inquiry Field */}
+          <div class="relative pt-2">
+            <label for="inquiry" class="label absolute left-2 top-0 z-10 bg-ink px-1 py-[2px] text-paper-pure">
+              INQUIRY
+            </label>
+            <textarea
+              id="inquiry"
+              name="inquiry"
+              rows="5"
+              placeholder="tell me about the work"
+              class="field mt-1 resize-none"></textarea>
+            <span id="inquiry-error" class="data mt-1 hidden text-danger">
+              -- a few more words, please
+            </span>
+          </div>
+
+          {/* Bottom Footer Area (Line + Button) */}
+          <div class="flex items-end justify-between gap-4">
+            {/* Decorative left rule: hazard tape, cut to a hairline. */}
+            <div class="hazard mb-3 h-[6px] w-1/2 border border-ink" aria-hidden="true"></div>
+
+            <button type="submit" id="submit-btn" class="btn">Send</button>
+          </div>
+        </form>
+      </div>
+
+      {/* Success Panel */}
+      <div id="success-panel" class="hidden flex-col gap-4 border-2 border-ink bg-paper-pure p-5">
+        <h2 class="h3 uppercase text-ink">MESSAGE SENT</h2>
+        <p class="body text-grey-600">
+          thanks <span id="sent-name"></span> — reply lands in your inbox within
+          two days.
+        </p>
+        <button type="button" id="reset-btn" class="btn btn-ghost w-fit">
+          write another
+        </button>
+      </div>
+    </div>
+
+    {/* A hairline rule divides the channels from the form on wide screens;
+        the block sits at the rule's vertical middle. */}
+    <aside class="md:flex md:flex-col md:justify-center md:self-stretch md:border-l md:border-ink md:pl-8">
+      <h2 class="label mb-4 inline-block self-start bg-ink px-2 py-1 text-paper-pure">
+        Other Ways to Connect
+      </h2>
+      <div class="flex flex-col gap-2">
+        <a href={`mailto:${email}`} class="btn">Email</a>
+        {
+          elsewhere.map((link) => (
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-ghost"
+            >
+              {link.label} ↗
+            </a>
+          ))
+        }
+      </div>
+    </aside>
+  </article>
+</Layout>
+
+<script>
+  function initContactForm() {
+    const wrapper = document.getElementById("contact-form-wrapper");
+    const form = document.getElementById("contact-form") as HTMLFormElement | null;
+    const successPanel = document.getElementById("success-panel");
+    const sentName = document.getElementById("sent-name");
+    const resetBtn = document.getElementById("reset-btn");
+
+    const nameInput = document.getElementById("name") as HTMLInputElement | null;
+    const emailInput = document.getElementById("email") as HTMLInputElement | null;
+    const inquiryInput = document.getElementById(
+      "inquiry",
+    ) as HTMLTextAreaElement | null;
+
+    const nameError = document.getElementById("name-error");
+    const emailError = document.getElementById("email-error");
+    const inquiryError = document.getElementById("inquiry-error");
+
+    if (!form || !nameInput || !emailInput || !inquiryInput) return;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    function showError(el: HTMLElement | null, show: boolean) {
+      el?.classList.toggle("hidden", !show);
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = nameInput!.value.trim();
+      const email = emailInput!.value.trim();
+      const inquiry = inquiryInput!.value.trim();
+
+      const nameValid = name.length > 0;
+      const emailValid = emailRegex.test(email);
+      const inquiryValid = inquiry.length >= 10;
+
+      showError(nameError, !nameValid);
+      showError(emailError, !emailValid);
+      showError(inquiryError, !inquiryValid);
+
+      if (!nameValid || !emailValid || !inquiryValid) return;
+
+      const subject = encodeURIComponent(`Contact Form: Message from ${name}`);
+      const body = encodeURIComponent(
+        `Name: ${name}\nEmail: ${email}\n\nMessage:\n${inquiry}`,
+      );
+      window.location.href = `mailto:ivanchen.code@gmail.com?subject=${subject}&body=${body}`;
+
+      if (sentName) sentName.textContent = name.split(" ")[0];
+      wrapper?.classList.add("hidden");
+      successPanel?.classList.remove("hidden");
+      successPanel?.classList.add("flex");
+    });
+
+    resetBtn?.addEventListener("click", () => {
+      form.reset();
+      showError(nameError, false);
+      showError(emailError, false);
+      showError(inquiryError, false);
+      successPanel?.classList.add("hidden");
+      successPanel?.classList.remove("flex");
+      wrapper?.classList.remove("hidden");
+    });
+  }
+
+  document.addEventListener("astro:page-load", initContactForm);
+</script>

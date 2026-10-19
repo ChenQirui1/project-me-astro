@@ -1,0 +1,71 @@
+---
+// Mobile only: pulling past the bottom of a top-level page goes to the next
+// one, in the same order as the nav. Detail pages and the last page stay put.
+---
+
+<script>
+  import { navigate } from "astro:transitions/client";
+
+  // Keep in step with the links in ui/Nav.astro.
+  const ORDER = ["/", "/projects", "/gallery", "/about", "/contact"];
+  // How far the finger has to drag past the bottom before it counts.
+  const PULL = 80;
+  const desktop = window.matchMedia("(min-width: 64rem)");
+
+  let startX = 0;
+  let startY = 0;
+  let armed = false;
+  let navigating = false;
+
+  // Layout.astro scrolls inside #container; LandingLayout.astro scrolls the page.
+  function scroller(): Element {
+    const container = document.getElementById("container");
+    return container && getComputedStyle(container).overflowY === "auto"
+      ? container
+      : (document.scrollingElement ?? document.documentElement);
+  }
+
+  function atBottom(el: Element) {
+    return el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+  }
+
+  function nextPath() {
+    const path = location.pathname.replace(/\/+$/, "") || "/";
+    const i = ORDER.indexOf(path);
+    return i === -1 ? null : (ORDER[i + 1] ?? null);
+  }
+
+  // Only a gesture that starts already at the bottom counts, so a fling that
+  // happens to reach the bottom doesn't also change page.
+  document.addEventListener(
+    "touchstart",
+    (e) => {
+      armed = !desktop.matches && !navigating && e.touches.length === 1 && atBottom(scroller());
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    },
+    { passive: true },
+  );
+
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!armed) return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = startY - e.touches[0].clientY;
+      if (dy < PULL || Math.abs(dx) > dy) return;
+
+      armed = false;
+      const next = nextPath();
+      if (next) {
+        navigating = true;
+        navigate(next);
+      }
+    },
+    { passive: true },
+  );
+
+  document.addEventListener("astro:page-load", () => {
+    navigating = false;
+  });
+</script>

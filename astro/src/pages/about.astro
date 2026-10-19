@@ -1,0 +1,119 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getEntry } from "astro:content";
+
+const resume = await getEntry("cv", "resume");
+if (!resume) throw new Error("cv/resume.json entry not found");
+const { personalInfo, about, experience, skills, interests } =
+  resume.data;
+
+const resumeLink = "/cv/Chen_Qirui_Resume.pdf";
+
+const technicalSkills = skills.technical.flatMap((cat) => cat.items);
+const aestheticSkills = skills.aesthetic ?? [];
+const softSkills = skills.soft ?? [];
+---
+
+<Layout title="about">
+  {/* One reading column, stacked like the project pages: identity, then each
+      section under an ink label plate. */}
+  <article class="mx-auto flex w-full max-w-[820px] flex-col gap-8 p-4 sm:p-8">
+    {/* Identity */}
+    <div>
+      <h1 class="h2 mb-2 uppercase text-ink">{personalInfo.name}</h1>
+      <p class="body mb-1 text-grey-600">{about?.headline}</p>
+      <p class="body mb-6 text-grey-600">
+        <a href={`mailto:${personalInfo.email}`} class="link">
+          {personalInfo.email}
+        </a>
+      </p>
+      {/* Primary ink button first, the resume as the outlined secondary. */}
+      <div class="flex flex-wrap gap-2">
+        <a href="/contact" class="btn">Get in touch</a>
+        <a
+          href={resumeLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-ghost"
+        >
+          Download Resume
+        </a>
+      </div>
+    </div>
+
+    {/* Background */}
+    <section>
+      <h2 class="label mb-4 inline-block bg-ink px-2 py-1 text-paper-pure">
+        Background
+      </h2>
+      <div class="prose flex flex-col gap-4 text-reading">
+        {about?.bio && <p>{about.bio}</p>}
+        {about?.philosophy && <p>{about.philosophy}</p>}
+      </div>
+    </section>
+
+    {/* Experience — one disclosure row per role */}
+    <section>
+      <h2 class="label mb-4 inline-block bg-ink px-2 py-1 text-paper-pure">
+        Experience
+      </h2>
+      <div class="accordion">
+        {
+          experience.map((job) => (
+            <details class="accordion-item">
+              <summary class="accordion-summary">
+                <span class="flex min-w-0 flex-1 flex-col gap-1">
+                  <span class="label">{job.position}</span>
+                  <span class="body opacity-70">{job.company}</span>
+                </span>
+                <span class="label shrink-0 opacity-70">{job.period}</span>
+              </summary>
+              <ul class="accordion-body body list-[square] pl-9 text-reading [&>li+li]:mt-1">
+                {job.responsibilities
+                  .flatMap((r) => r.details)
+                  .map((detail) => (
+                    <li>{detail}</li>
+                  ))}
+              </ul>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Skills */}
+    <section>
+      <h2 class="label mb-4 inline-block bg-ink px-2 py-1 text-paper-pure">
+        Skills
+      </h2>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-wrap gap-1">
+          {technicalSkills.map((skill) => <span class="tag">{skill}</span>)}
+        </div>
+        <div class="flex flex-wrap gap-1">
+          {aestheticSkills.map((skill) => <span class="tag">{skill}</span>)}
+        </div>
+        <div class="flex flex-wrap gap-1">
+          {softSkills.map((skill) => <span class="tag">{skill}</span>)}
+        </div>
+      </div>
+    </section>
+
+    {/* Interests — what the work is heading toward, kept apart from skills */}
+    {
+      interests && interests.length > 0 && (
+        <section>
+          <h2 class="label mb-4 inline-block bg-ink px-2 py-1 text-paper-pure">
+            Interests
+          </h2>
+          <div class="flex flex-wrap gap-1">
+            {interests.map((interest) => (
+              <span class="tag">{interest}</span>
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</Layout>
+

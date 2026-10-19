@@ -1,37 +1,110 @@
 ---
-import { getProjects } from "../../lib/sanity";
+import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
+import { asset } from "../../lib/assets";
 
-const projects = await getProjects();
+// Featured projects lead the catalogue; the rest follow in explicit `order`,
+// falling back to most-recent-first for synced pages that have no order set.
+const projects = (await getCollection("projects")).sort((a, b) => {
+  if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+  const byOrder = (a.data.order ?? Infinity) - (b.data.order ?? Infinity);
+  if (byOrder !== 0 && Number.isFinite(byOrder)) return byOrder;
+  return b.data.year - a.data.year;
+});
+
+const featuredCount = projects.filter((project) => project.data.featured).length;
+
+// Filter chips: one per top-level section of the Confluence project tree that
+// has published work, in first-seen order. More sections, more chips.
+const categories = [
+  ...new Set(
+    projects.map((project) => project.data.category).filter(Boolean) as string[],
+  ),
+];
 ---
 
-<Layout>
-  <div id="container">
-    <section class="px-8 pt-10 pb-2">
-      <div class="max-w-[90%] mx-auto">
+<Layout title="projects">
+  <section class="p-4 sm:p-6">
+    {/* Filter chips on the left, record count stamped as a plate on the right. */}
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Filter projects">
+        <button type="button" class="tag" data-filter="all" aria-pressed="true">
+          All
+        </button>
         {
-          projects.map((project) => (
-            <a
-              href={`/projects/${project.projectId}`}
-              class="block no-underline"
+          categories.map((category) => (
+            <button
+              type="button"
+              class="tag"
+              data-filter={category}
+              aria-pressed="false"
             >
-              <ProjectCard
-                title={project.title}
-                image={project.thumbnail}
-                description={project.description}
-              />
-            </a>
+              {category}
+            </button>
           ))
         }
       </div>
-    </section>
-  </div>
+      <span class="label ml-auto bg-ink px-2 py-1 text-paper-pure">
+        {featuredCount > 0 && `${featuredCount} featured / `}{projects.length} selected works
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {
+        projects.map((project) => (
+          <a
+            id={project.id}
+            href={`/projects/${project.id}`}
+            data-category={project.data.category ?? ""}
+            class="block h-full scroll-mt-10"
+          >
+            <ProjectCard
+              title={project.data.title}
+              image={asset(project.data.thumbnail)}
+              description={project.data.description}
+              featured={project.data.featured}
+            />
+          </a>
+        ))
+      }
+    </div>
+  </section>
 </Layout>
 
-<style>
-  /* Smooth scrolling for anchor links */
-  html {
-    scroll-behavior: smooth;
+<script>
+  function initProjectFilter() {
+    const chips = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
+    const cards = document.querySelectorAll<HTMLElement>("[data-category]");
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const filter = chip.dataset.filter;
+        chips.forEach((other) =>
+          other.setAttribute("aria-pressed", String(other === chip)),
+        );
+        cards.forEach((card) => {
+          card.hidden = filter !== "all" && card.dataset.category !== filter;
+        });
+      });
+    });
   }
-</style>
+
+  // A detail page's back link lands on /projects#<id>. The browser's hash jump
+  // aligns that card to the top of the panel, which nudges the page down even
+  // when the card was already on screen. Start from the top instead and scroll
+  // only as far as it takes to bring the card into view.
+  function landOnCard() {
+    const target =
+      location.hash && document.getElementById(location.hash.slice(1));
+    if (!target) return;
+    const panel = document.getElementById("container");
+    if (panel) panel.scrollTop = 0;
+    target.scrollIntoView({ block: "nearest" });
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    initProjectFilter();
+    landOnCard();
+  });
+</script>

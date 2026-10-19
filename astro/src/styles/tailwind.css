@@ -1,104 +1,63 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap");
+/* Archivo (display + UI), JetBrains Mono (data), Ms Madi (signature only). */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&family=Ms+Madi&display=swap");
 
 @import "tailwindcss";
+@import "./style.css";
 
-/* Box sizing reset */
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
-}
+/* Bridges the style.css tokens into Tailwind's utility namespaces, so
+   `bg-paper`, `border-ink`, `text-grey-400` etc. all resolve to the same
+   custom properties the component classes (.btn, .label…) use. One source
+   of truth. */
+@theme static {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-reading: var(--text-reading);
+  --color-paper: var(--paper);
+  --color-paper-pure: var(--paper-pure);
+  --color-paper-dim: var(--paper-dim);
+  --color-paper-shade: var(--paper-shade);
 
-html {
-  box-sizing: border-box;
-}
+  --color-grey-900: var(--grey-900);
+  --color-grey-800: var(--grey-800);
+  --color-grey-700: var(--grey-700);
+  --color-grey-600: var(--grey-600);
+  --color-grey-500: var(--grey-500);
+  --color-grey-400: var(--grey-400);
+  --color-grey-300: var(--grey-300);
+  --color-grey-200: var(--grey-200);
 
-/* Base styles */
-body {
-  background: black;
-  color: white;
-  font-family: "Inter", Roboto, "Helvetica Neue", "Arial Nova", "Nimbus Sans", Arial, sans-serif;
-}
+  --color-blue-a1: var(--blue-a1);
+  --color-blue-a2: var(--blue-a2);
+  --color-blue-a3: var(--blue-a3);
+  --color-blue-a4: var(--blue-a4);
+  --color-blue-a5: var(--blue-a5);
+  --color-blue-signal: var(--blue-signal);
 
-pre {
-  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
-  font-weight: normal;
-  background: linear-gradient(14deg, #d83333 0%, #f041ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-}
+  --color-accent: var(--accent);
+  --color-warning: var(--yellow);
+  --color-danger: var(--red);
 
-p {
-  color: #787a7c;
-  font-size: 16px;
-  line-height: 24px;
-  letter-spacing: -0.006em;
-  margin: 0;
-}
+  /* Fonts (`--font-*`) and the type scale (`--text-*`) are defined directly
+     in style.css's @theme blocks, so they need no bridge here. */
 
-code {
-  display: inline-block;
-  background: linear-gradient(66.77deg, #f3cddd 0%, #f5cee7 100%) padding-box,
-    linear-gradient(155deg, #d83333 0%, #f041ff 18%, #f5cee7 45%) border-box;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 6px 8px;
-}
+  /* Square, always. */
+  --radius: 0px;
+  --radius-none: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 
-a {
-  font-family: "Fragment Mono", serif;
-  font-weight: 400;
-  font-style: normal;
-  text-decoration: none;
-}
+  --tracking-display: var(--track-display);
+  --tracking-heading: var(--track-heading);
+  --tracking-label: var(--track-label);
+  --tracking-micro: var(--track-micro);
 
-/* Headings */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: "Inter", "Fragment Mono", serif;
-  /* font-size: 24px; */
-  line-height: 32px;
-  /* font-weight: 700; */
+  /* The 4px black seam between panels. Tailwind's default 0.25rem step
+     already lands on the sheet's 2px/4px ladder, so it is left alone. */
+  --spacing-gutter: var(--gutter);
 
-  border-color: #787a7c;
-}
-
-div {
-  border-color: #787a7c;
-}
-
-/* Background element */
-#background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  filter: blur(100px);
-}
-
-/* Container */
-#container {
-  font-family: "Inter", Roboto, "Helvetica Neue", "Arial Nova", "Nimbus Sans", Arial, sans-serif;
-}
-
-/* Fragment Mono utility classes */
-.fragment-mono-regular {
-  font-family: "Fragment Mono", serif;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.fragment-mono-regular-italic {
-  font-family: "Fragment Mono", serif;
-  font-weight: 400;
-  font-style: italic;
+  /* Nothing eases. Nothing bounces. */
+  --ease-linear: linear;
+  --ease-step: steps(4, end);
 }

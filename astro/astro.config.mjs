@@ -5,22 +5,26 @@ import mdx from "@astrojs/mdx";
 
 import tailwindcss from "@tailwindcss/vite";
 
-import sanity from "@sanity/astro";
 import react from "@astrojs/react";
+
+import devAssets from "./integrations/dev-assets.mjs";
+import rehypeSections from "./src/lib/rehype-sections.mjs";
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [
-    mdx(),
-    sanity({
-      projectId: "y6vzgt51",
-      dataset: "production",
-      // Set useCdn to false if you're building statically.
-      useCdn: false,
-    }),
-  ],
+  integrations: [mdx(), devAssets()],
+
+  markdown: {
+    rehypePlugins: [rehypeSections],
+  },
 
   vite: {
     plugins: [tailwindcss()],
+    // Pre-bundle masonry at startup. Left to on-demand discovery, Vite
+    // re-optimizes mid-session and the gallery's import 504s as an outdated
+    // dep, so the layout never runs.
+    optimizeDeps: {
+      include: ["masonry-layout"],
+    },
   },
 });

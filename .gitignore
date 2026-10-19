@@ -13,12 +13,27 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# environment variables
-.env
-.env.production
+# environment variables — never commit any of them. The glob catches strays
+# like .env.local and timestamped .env.bak-* backups, which the old two-line
+# rule let through; .env.example is the committed template.
+.env*
+!.env.example
 
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
+
+# wrangler local state
+.wrangler/
+
+# Confluence is the source of truth for project content. The sync runs inside
+# the Cloudflare build and writes into the build container only, so none of
+# this is ever committed. See astro/scripts/sync-confluence.mjs.
+astro/src/content/projects/*.md
+astro/assets/confluence/
+
+# Superseded: the asset manifest now lives in R2 so local runs and the build
+# container share one copy. See astro/scripts/assets.mjs.
+astro/assets/.manifest.json

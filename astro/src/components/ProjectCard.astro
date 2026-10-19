@@ -1,44 +1,46 @@
 ---
 // src/components/ProjectCard.astro
-import { Image } from "astro:assets";
-import { urlFor } from "../lib/sanity";
 interface Props {
   title: string;
-  image: any;
+  // A synced project may not have hero media yet.
+  image?: string;
   description: string;
+  featured?: boolean;
 }
 
-const { title, image, description } = Astro.props;
-
-const imageUrl = urlFor(image).width(800).url();
+const { title, image, description, featured = false } = Astro.props;
 ---
 
-<article class="flex flex-col border border-neutral-500 mb-8 font-mono">
-  <div class="grid grid-cols-2 border-b border-neutral-500">
-    <div
-      class="bg-neutral-200 text-black p-2 text-sm border-r border-neutral-500"
-    >
-      {title}
-    </div>
-    <div class="bg-black"></div>
+<article class="panel group flex h-full flex-col">
+  {/* Ink header plate. Inverts to hazard yellow when the card is hovered. */}
+  <div
+    class="bar justify-between border-b border-ink transition-[background-color,color] duration-[80ms] ease-linear group-hover:bg-warning group-hover:text-ink"
+  >
+    <span class="label truncate">{title}</span>
+    {
+      featured && (
+        <span class="micro shrink-0 bg-warning px-1 py-[2px] text-ink group-hover:bg-ink group-hover:text-warning">
+          featured
+        </span>
+      )
+    }
   </div>
 
-  <div class="p-3 border-b border-neutral-500 bg-black">
-    <!-- <img src={image} alt={title} class="w-full h-auto block object-cover" /> -->
-    <Image
-      src={imageUrl}
-      alt={title}
-      width={400}
-      height={300}
-      class="w-full h-auto block object-cover"
-    />
+  {/* Image well: the hero runs edge to edge, between the header bar and the
+      description, with the card's own hairlines as its frame. */}
+  <div class="border-b border-ink">
+    {
+      image ? (
+        <img src={image} alt={title} class="block h-56 w-full object-cover" />
+      ) : (
+        <div class="grid-lines flex h-56 w-full items-center justify-center">
+          <span class="micro text-grey-500">no hero media</span>
+        </div>
+      )
+    }
+  </div>
 
-    <div
-      class="p-4 border-b border-neutral-500 bg-black text-white text-sm leading-relaxed"
-    >
-      <p>{description}</p>
-    </div>
-
-    <div class="h-1.5 bg-black"></div>
+  <div class="flex flex-1 flex-col p-3">
+    <p class="body text-reading">{description}</p>
   </div>
 </article>

@@ -185,35 +185,47 @@ without invoking the Worker at all.
 pnpm deploy   # build and deploy from your machine
 ```
 
-CI runs the same thing from `.github/workflows/deploy.yml`: `pnpm build:ci`,
-which syncs Confluence, mirrors attachments to R2, then builds, followed by
-`wrangler deploy`. **Synced content never enters git** — it exists only in the
-runner and in the deployed output. Confluence stays the archive; the repo stays
-code and styling.
+In CI, Cloudflare Workers Builds clones the repo and runs the build itself:
+`pnpm build:ci`, which syncs Confluence, mirrors attachments to R2, then builds,
+followed by `pnpm exec wrangler deploy`. **Synced content never enters git** —
+it exists only in the build container and in the deployed output. Confluence
+stays the archive; the repo stays code and styling.
 
-Two things deploy, and both run that same build, so every deploy carries the
-current code *and* the current Confluence content:
+Two things start a build, and both run that same command, so every deploy
+carries the current code *and* the current Confluence content:
 
 | Trigger | Mechanism |
 | :--- | :--- |
-| Push to `master` | `on: push` |
-| Confluence publish | `repository_dispatch`, fired by a Confluence automation rule |
+| Push to `master` | Workers Builds git integration |
+| Confluence publish | A deploy hook — a Confluence automation rule POSTs its URL |
 
-GitHub Actions is the builder rather than Cloudflare Workers Builds, which
-rejects its own freshly-issued build tokens ("the build token selected for this
-build has been deleted or rolled"). Nothing about the runtime changes — only
-who runs the build — and Actions minutes are free and unlimited on a public
-repo. If Workers Builds is ever fixed, the equivalent setup is a deploy hook
-POSTed from the same Confluence rule; disconnect the git integration first so
-the two don't both deploy.
+A deploy hook URL *is* its own credential — anyone holding it can start a build,
+so treat it like a password. Hooks are rate limited to 10 builds/minute per
+Worker, and redundant fires are deduped if they land before the first build
+starts.
 
-Required repository **secrets**: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
-`CONFLUENCE_BASE_URL`, `CONFLUENCE_EMAIL`, `CONFLUENCE_API_TOKEN`. Required
-**variable**: `CONFLUENCE_ROOT`. Optional variables:
+Required **build** variables, under Settings > Build > Variables and secrets.
+That is a separate namespace from runtime secrets: the sync runs at build time,
+so none of these are bound into the deployed Worker.
+
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CONFLUENCE_BASE_URL`,
+`CONFLUENCE_EMAIL`, `CONFLUENCE_API_TOKEN`, `CONFLUENCE_ROOT`. Optional:
 `CONFLUENCE_PUBLISH_STATUS`, `CONFLUENCE_SPACE_KEY`.
 
-`CLOUDFLARE_API_TOKEN` needs two permissions, because one token both deploys
-and writes assets: **Workers Scripts: Edit** and **Workers R2 Storage: Edit**.
+`.node-version` pins the build image's Node, which `sharp` is otherwise the
+first thing to break on.
 
 A failed build leaves the previous deployment live, so an expired Confluence
 token cannot take the site down.
+
+### If a build fails on the build token
+
+"The build token ... has been deleted or rolled", or one "belonging to a user
+who has left your organization", means the build *trigger* still references a
+token UUID that no longer resolves. Creating a new token does not rewrite that
+reference, and the dashboard's token dropdown is known to keep reselecting stale
+ones. Delete the dead `Workers Builds - *` tokens at
+dash.cloudflare.com/profile/api-tokens first, then reselect the live one, save,
+and reload to confirm it stuck before retrying — a retry applies whatever
+configuration exists at retry time. Failing that, disconnect and reconnect the
+repository, which regenerates the trigger from scratch.

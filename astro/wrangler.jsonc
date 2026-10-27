@@ -4,6 +4,10 @@
   "main": "./worker/index.ts",
   "compatibility_date": "2026-08-01",
 
+  // Custom domain. Cloudflare manages the DNS record and certificate for
+  // the zone on deploy; the workers.dev URL keeps working alongside it.
+  "routes": [{ "pattern": "ivanchen.xyz", "custom_domain": true }],
+
   // Astro builds a fully static site into `dist/`, served straight from the
   // assets binding. `run_worker_first` scopes the Worker to the one route
   // that isn't a file on disk — the /img/* R2 proxy in worker/index.ts — so

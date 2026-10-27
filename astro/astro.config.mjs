@@ -12,6 +12,10 @@ import rehypeSections from "./src/lib/rehype-sections.mjs";
 
 // https://astro.build/config
 export default defineConfig({
+  // Canonical origin. Astro needs it to build absolute URLs (canonical links,
+  // sitemap, feeds) rather than site-relative ones.
+  site: "https://ivanchen.xyz",
+
   integrations: [mdx(), devAssets()],
 
   markdown: {

@@ -61,6 +61,42 @@ test("info panel becomes a blockquote", () => {
   assert.match(md, /Heads up\./);
 });
 
+test("expand macro survives as the stylesheet's accordion", () => {
+  const md = convert(
+    `<ac:structured-macro ac:name="expand">` +
+      `<ac:parameter ac:name="title">What the evidence forced</ac:parameter>` +
+      `<ac:rich-text-body><p>Only 2 named it.</p></ac:rich-text-body>` +
+      `</ac:structured-macro>`,
+  );
+  // Turndown's default rule for an unknown block drops the wrapper and keeps
+  // the children, which would spill a collapsed block onto the page with its
+  // title as a loose line. The element has to reach the page whole, carrying
+  // the accordion classes style.css draws the disclosure from.
+  assert.match(md, /<details class="accordion-item">/);
+  assert.match(md, /<summary class="accordion-summary">What the evidence forced<\/summary>/);
+  assert.match(md, /<div class="accordion-body"><p>Only 2 named it\.<\/p><\/div>/);
+});
+
+test("expand macro title decodes entities before escaping", () => {
+  const md = convert(
+    `<ac:structured-macro ac:name="expand">` +
+      `<ac:parameter ac:name="title">Editorial TODO &mdash; not public</ac:parameter>` +
+      `<ac:rich-text-body><p>Body.</p></ac:rich-text-body>` +
+      `</ac:structured-macro>`,
+  );
+  assert.match(md, /<summary class="accordion-summary">Editorial TODO — not public<\/summary>/);
+  assert.doesNotMatch(md, /&amp;mdash;/);
+});
+
+test("expand macro without a title still collapses", () => {
+  const md = convert(
+    `<ac:structured-macro ac:name="expand">` +
+      `<ac:rich-text-body><p>No title given.</p></ac:rich-text-body>` +
+      `</ac:structured-macro>`,
+  );
+  assert.match(md, /<summary class="accordion-summary">Details<\/summary>/);
+});
+
 test("internal link resolves when the target is synced", () => {
   const md = convert(
     `<p><ac:link><ri:page ri:content-title="Known Page" />` +

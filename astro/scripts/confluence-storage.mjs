@@ -25,6 +25,14 @@ turndown.addRule("lineBreak", {
   replacement: () => "\n",
 });
 
+// A collapsed block is raw HTML built by the expand macro below and has to
+// reach the page intact. Turndown's default rule for an unknown block element
+// keeps the children and drops the wrapper, which would spill the block's
+// contents into the copy with its title left behind as a loose line. `keep`
+// re-serializes the element, blank-line padded as a block; DETAILS covers its
+// own SUMMARY, since keeping an element re-serializes its children with it.
+turndown.keep((node) => node.nodeName === "DETAILS");
+
 const escapeHtml = (text) =>
   text
     .replace(/&/g, "&amp;")
@@ -155,8 +163,22 @@ export function lowerStorageToHtml(storage, { attachmentUrl, pageLink }) {
       const params = macroParams(body);
       const rich =
         /<ac:rich-text-body>([\s\S]*?)<\/ac:rich-text-body>/.exec(body)?.[1] ?? "";
-      const title = params.title ?? "Details";
-      return `<details><summary>${escapeHtml(title)}</summary>${rich}</details>`;
+      // The parameter arrives as raw storage text, so an em dash or ampersand
+      // in the title is still `&mdash;` / `&amp;` here. Escaping without
+      // decoding first turns that into `&amp;mdash;` and the summary renders
+      // the entity as literal text.
+      const title = decodeEntities(params.title ?? "Details");
+      // The classes are the stylesheet's own accordion (see `.accordion-item`
+      // in src/styles/style.css), which draws the rule, the hazard-yellow
+      // hover and the +/- mark from the element's open state. Without them a
+      // collapsed block falls back to the browser's default triangle, which
+      // is the one thing on the page that wouldn't look designed.
+      return (
+        `<details class="accordion-item">` +
+        `<summary class="accordion-summary">${escapeHtml(title)}</summary>` +
+        `<div class="accordion-body">${rich}</div>` +
+        `</details>`
+      );
     }
 
     // Layout-ish macros carry content worth keeping; everything else

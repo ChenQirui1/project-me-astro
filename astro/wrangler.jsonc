@@ -4,9 +4,13 @@
   "main": "./worker/index.ts",
   "compatibility_date": "2026-08-01",
 
-  // Custom domain. Cloudflare manages the DNS record and certificate for
-  // the zone on deploy; the workers.dev URL keeps working alongside it.
+  // ivanchen.xyz is the only origin. Cloudflare manages the apex's DNS record
+  // and certificate on deploy. The workers.dev subdomain is switched off
+  // explicitly: defining `routes` already disables it by default, but stating
+  // it keeps the site reachable at one hostname rather than leaving that to
+  // inferred behaviour.
   "routes": [{ "pattern": "ivanchen.xyz", "custom_domain": true }],
+  "workers_dev": false,
 
   // Astro builds a fully static site into `dist/`, served straight from the
   // assets binding. `run_worker_first` scopes the Worker to the one route

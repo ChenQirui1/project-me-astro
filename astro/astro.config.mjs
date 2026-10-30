@@ -8,6 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@astrojs/react";
 
 import devAssets from "./integrations/dev-assets.mjs";
+import featureRoutes from "./integrations/feature-routes.mjs";
 import rehypeSections from "./src/lib/rehype-sections.mjs";
 
 // https://astro.build/config
@@ -16,7 +17,7 @@ export default defineConfig({
   // sitemap, feeds) rather than site-relative ones.
   site: "https://ivanchen.xyz",
 
-  integrations: [mdx(), devAssets()],
+  integrations: [mdx(), devAssets(), featureRoutes()],
 
   markdown: {
     rehypePlugins: [rehypeSections],

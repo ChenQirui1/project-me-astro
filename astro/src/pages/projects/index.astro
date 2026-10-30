@@ -3,15 +3,11 @@ import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
 import { asset } from "../../lib/assets";
+import { byCatalogueOrder } from "../../lib/projects";
 
 // Featured projects lead the catalogue; the rest follow in explicit `order`,
 // falling back to most-recent-first for synced pages that have no order set.
-const projects = (await getCollection("projects")).sort((a, b) => {
-  if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
-  const byOrder = (a.data.order ?? Infinity) - (b.data.order ?? Infinity);
-  if (byOrder !== 0 && Number.isFinite(byOrder)) return byOrder;
-  return b.data.year - a.data.year;
-});
+const projects = (await getCollection("projects")).sort(byCatalogueOrder);
 
 const featuredCount = projects.filter((project) => project.data.featured).length;
 

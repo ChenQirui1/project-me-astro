@@ -35,7 +35,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { storageToMarkdown, firstParagraphText } from "./confluence-storage.mjs";
+import {
+  storageToMarkdown,
+  firstParagraphText,
+  isPlayable,
+} from "./confluence-storage.mjs";
 import {
   extractMetadata,
   extractSections,
@@ -288,8 +292,15 @@ async function writeProject(prepared, titleToSlug) {
     return `/img/confluence/${pageId}/${filename}`;
   };
 
+  // Slides of a carousel, by URL. They render in the body, so they must not
+  // also land in `gallery` and show a second time in the page's media grid.
+  const inCarousels = new Set();
+
   const markdown = storageToMarkdown(storage, {
     attachmentUrl,
+    onCarousel: (sources) => {
+      for (const source of sources) inCarousels.add(source);
+    },
     // Only link to pages that will actually be published — an unpublished
     // target degrades to plain text rather than becoming a dead link.
     pageLink: (title) => {
@@ -299,11 +310,21 @@ async function writeProject(prepared, titleToSlug) {
   });
 
   // Hero media may be named in the metadata block; otherwise take the first
-  // image the page actually renders.
-  const heroName =
-    meta.heroMedia && attachments.has(meta.heroMedia)
-      ? meta.heroMedia
-      : [...usedAttachments][0];
+  // image the page actually renders. A clip is never the hero — `thumbnail`
+  // is rendered as an `<img>` by both the catalogue card and the page header,
+  // so a page carrying only clips gets no hero rather than a broken one, and
+  // falls back to the skeleton those two already draw.
+  const stills = [...usedAttachments].filter((filename) => !isPlayable(filename));
+  let heroName = stills[0];
+  if (meta.heroMedia && attachments.has(meta.heroMedia)) {
+    if (isPlayable(meta.heroMedia)) {
+      console.warn(
+        `    ! hero media "${meta.heroMedia}" is a clip — using a still instead`,
+      );
+    } else {
+      heroName = meta.heroMedia;
+    }
+  }
   if (heroName) usedAttachments.add(heroName);
 
   const localDir = path.join(ASSETS_DIR, pageId);
@@ -328,7 +349,8 @@ async function writeProject(prepared, titleToSlug) {
   const assetUrl = (filename) => `/img/confluence/${pageId}/${filename}`;
   const gallery = [...usedAttachments]
     .filter((filename) => filename !== heroName)
-    .map(assetUrl);
+    .map(assetUrl)
+    .filter((url) => !inCarousels.has(url));
 
   const ancestry = readAncestry(page, rootId);
   const description = meta.summary ?? firstParagraphText(storage).slice(0, 240);

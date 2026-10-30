@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import Carousel from "../../components/Carousel.astro";
 import { getCollection, render } from "astro:content";
 import { asset } from "../../lib/assets";
 
@@ -22,6 +23,10 @@ const mediums =
     : project.data.medium
       ? project.data.medium.split(",").map((m) => m.trim())
       : [];
+
+// A mirrored attachment may be a clip; the media grid has to play those
+// rather than try to show them.
+const isClip = (url: string) => /\.(?:mp4|webm|mov|m4v)$/i.test(url);
 
 // What kind of project this is, shown above the year. Synced pages rarely fill
 // in a project type, so fall back to where the page sits in the Confluence tree.
@@ -110,10 +115,12 @@ const nextId = projects[(currentIndex + 1) % projects.length].id;
         )
       }
 
-      {/* Body content */}
+      {/* Body content. Carousel is script only — it binds the image sets the
+          Confluence sync collapsed in the Markdown. */}
       <div class="copy">
         <Content />
       </div>
+      <Carousel />
 
       {/* Media gallery — attachments mirrored out of Confluence into R2 */}
       {
@@ -123,14 +130,26 @@ const nextId = projects[(currentIndex + 1) % projects.length].id;
               media
             </h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {project.data.gallery.map((item) => (
-                <img
-                  src={asset(item)}
-                  alt=""
-                  loading="lazy"
-                  class="block w-full border border-ink"
-                />
-              ))}
+              {project.data.gallery.map((item) =>
+                isClip(item) ? (
+                  <video
+                    src={asset(item)}
+                    controls
+                    muted
+                    loop
+                    playsinline
+                    preload="none"
+                    class="block w-full border border-ink"
+                  />
+                ) : (
+                  <img
+                    src={asset(item)}
+                    alt=""
+                    loading="lazy"
+                    class="block w-full border border-ink"
+                  />
+                ),
+              )}
             </div>
           </div>
         )
@@ -145,7 +164,7 @@ const nextId = projects[(currentIndex + 1) % projects.length].id;
                 <dt class="label border-b border-grey-200 py-2 pr-6 text-grey-600 last:border-b-0">
                   {label}
                 </dt>
-                <dd class="data border-b border-grey-200 py-2 text-ink last:border-b-0">
+                <dd class="record-value border-b border-grey-200 py-2 text-ink last:border-b-0">
                   {value}
                 </dd>
               </>

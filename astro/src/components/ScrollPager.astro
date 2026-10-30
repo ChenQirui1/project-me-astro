@@ -5,9 +5,16 @@
 
 <script>
   import { navigate } from "astro:transitions/client";
+  import { flags } from "../lib/flags.mjs";
 
   // Keep in step with the links in ui/Nav.astro.
-  const ORDER = ["/", "/projects", "/gallery", "/about", "/contact"];
+  const ORDER = [
+    "/",
+    "/projects",
+    ...(flags.gallery ? ["/gallery"] : []),
+    "/about",
+    "/contact",
+  ];
   // How far the finger has to drag past the bottom before it counts.
   const PULL = 80;
   const desktop = window.matchMedia("(min-width: 64rem)");

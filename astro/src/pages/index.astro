@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/LandingLayout.astro";
 import Socials from "../components/Socials.astro";
+import { flags } from "../lib/flags.mjs";
 
 // Same landing arrangement as before: call to action, the offset nav rows,
 // then the name plate. Only the dressing changed.
@@ -8,7 +9,9 @@ const rows = [
   { href: "/about", label: "about", lead: "flex-1", trail: "" },
   { href: "/contact", label: "contact", lead: "w-1/3", trail: "flex-1" },
   { href: "/projects", label: "projects", lead: "", trail: "flex-1" },
-  { href: "/gallery", label: "gallery", lead: "w-1/4", trail: "flex-1" },
+  ...(flags.gallery
+    ? [{ href: "/gallery", label: "gallery", lead: "w-1/4", trail: "flex-1" }]
+    : []),
 ];
 ---
 

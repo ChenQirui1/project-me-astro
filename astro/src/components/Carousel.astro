@@ -1,0 +1,164 @@
+---
+// Enhances every `<div class="carousel">` in a rendered Markdown body — the
+// markup scripts/confluence-storage.mjs writes for a set of visuals in a
+// Confluence section. A slide is a figure: a still, a GIF or a clip, with the
+// caption it carried underneath.
+//
+// Script only, like ScrollPager: the slides come from the Markdown, so there
+// is no per-instance component to render. Unenhanced the track is already a
+// swipeable snap strip with its captions on the page (see `.carousel` in
+// style.css); this adds the bar — prev/next, a tick per slide, a counter —
+// and keeps an off-screen clip quiet.
+---
+
+<script>
+  // The system's motion rule: inversions and steps, nothing eased. A slide
+  // change is a cut, not a glide.
+  const JUMP: ScrollToOptions = { behavior: "auto" };
+
+  function enhance(track: HTMLElement) {
+    if (track.dataset.carousel === "on") return;
+    // Figures are what the converter writes; the bare visuals are the fallback
+    // for a hand-authored track.
+    const slides = [...track.querySelectorAll<HTMLElement>(".carousel-slide")];
+    if (slides.length === 0) {
+      slides.push(...track.querySelectorAll<HTMLElement>(":scope > img, :scope > video"));
+    }
+    // One visual is an illustration. The converter shouldn't emit these, but a
+    // hand-authored page might.
+    if (slides.length < 2) return;
+    track.dataset.carousel = "on";
+
+    const title = track.dataset.title ?? "";
+    track.setAttribute("role", "group");
+    track.setAttribute("aria-roledescription", "carousel");
+    if (title) track.setAttribute("aria-label", title);
+    // Focusable so the arrow keys can drive it.
+    track.tabIndex = 0;
+
+    const figure = document.createElement("figure");
+    figure.className = "carousel-frame";
+    track.replaceWith(figure);
+    figure.append(track);
+
+    const bar = document.createElement("div");
+    bar.className = "bar carousel-bar";
+
+    const button = (label: string, text: string) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "carousel-nav";
+      el.setAttribute("aria-label", label);
+      el.textContent = text;
+      bar.append(el);
+      return el;
+    };
+    const prev = button("Previous slide", "←");
+    const next = button("Next slide", "→");
+
+    const name = document.createElement("span");
+    name.className = "label carousel-title";
+    name.textContent = title;
+    bar.append(name);
+
+    const ticks = document.createElement("div");
+    ticks.className = "carousel-ticks";
+    // A tick per slide is a scale, not a scrollbar — past a dozen it stops
+    // reading as one, so the counter carries it alone.
+    if (slides.length <= 12) {
+      slides.forEach((slide, i) => {
+        const tick = document.createElement("button");
+        tick.type = "button";
+        tick.className = "carousel-tick";
+        tick.setAttribute("aria-label", `Slide ${i + 1} of ${slides.length}`);
+        tick.addEventListener("click", () => go(i));
+        ticks.append(tick);
+      });
+      bar.append(ticks);
+    }
+
+    const count = document.createElement("span");
+    count.className = "data carousel-count";
+    bar.append(count);
+
+    figure.append(bar);
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    // Offsets are measured rather than taken from offsetLeft, which is
+    // relative to whichever ancestor happens to be positioned.
+    const offsetOf = (slide: HTMLElement) =>
+      slide.getBoundingClientRect().left -
+      track.getBoundingClientRect().left +
+      track.scrollLeft;
+
+    let current = 0;
+
+    function go(index: number) {
+      const clamped = Math.max(0, Math.min(slides.length - 1, index));
+      track.scrollTo({ ...JUMP, left: offsetOf(slides[clamped]) });
+      // Scrolling fires the handler below, but not when the track is already
+      // there — so paint the state here too rather than waiting on an event.
+      paint(clamped);
+    }
+
+    // A clip two slides away carries on playing, and is heard rather than
+    // seen. Pausing is enough — it keeps its place for when it's reached.
+    function quieten(except: number) {
+      slides.forEach((slide, i) => {
+        if (i === except) return;
+        const clips =
+          slide instanceof HTMLVideoElement ? [slide] : slide.querySelectorAll("video");
+        clips.forEach((clip) => clip.pause());
+      });
+    }
+
+    function paint(index: number) {
+      current = index;
+      count.textContent = `${pad(index + 1)}/${pad(slides.length)}`;
+      prev.disabled = index === 0;
+      next.disabled = index === slides.length - 1;
+      [...ticks.children].forEach((tick, i) =>
+        tick.setAttribute("aria-current", String(i === index)),
+      );
+      quieten(index);
+    }
+
+    prev.addEventListener("click", () => go(current - 1));
+    next.addEventListener("click", () => go(current + 1));
+
+    track.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") go(current - 1);
+      else if (event.key === "ArrowRight") go(current + 1);
+      else return;
+      // The track is a scroll container, so the browser would also scroll it.
+      event.preventDefault();
+    });
+
+    // Swiping and the scrollbar bypass go() entirely; read the index back off
+    // the scroll position, picking whichever slide sits nearest the left edge.
+    let queued = 0;
+    track.addEventListener(
+      "scroll",
+      () => {
+        cancelAnimationFrame(queued);
+        queued = requestAnimationFrame(() => {
+          const distances = slides.map((slide) =>
+            Math.abs(offsetOf(slide) - track.scrollLeft),
+          );
+          paint(distances.indexOf(Math.min(...distances)));
+        });
+      },
+      { passive: true },
+    );
+
+    paint(0);
+  }
+
+  // Fires on first load and after every view transition.
+  document.addEventListener("astro:page-load", () => {
+    document
+      .querySelectorAll<HTMLElement>(".carousel")
+      .forEach((track) => enhance(track));
+  });
+</script>

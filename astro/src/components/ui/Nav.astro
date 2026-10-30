@@ -1,48 +1,139 @@
 ---
+import { getCollection } from "astro:content";
+import { flags } from "../../lib/flags.mjs";
+import { byCatalogueOrder } from "../../lib/projects";
+
 const { activePath = "/projects" } = Astro.props;
+
+// `Astro.url.pathname` carries a trailing slash ("/about/"), so compare on a
+// normalized form — otherwise no row ever matches its own link and nothing
+// shows as active.
+const path = activePath.length > 1 ? activePath.replace(/\/$/, "") : activePath;
+
+// The same order as the catalogue page, so the index column and /projects
+// read the same way.
+const projects = (await getCollection("projects")).sort(byCatalogueOrder);
+
+// The catalogue only unfolds once a project is open. Everywhere else the row
+// is a plain link, so the column stays four items long.
+const inProject = path.startsWith("/projects/");
 
 const links = [
   { name: "projects", url: "/projects" },
-  { name: "gallery", url: "/gallery" },
+  ...(flags.gallery ? [{ name: "gallery", url: "/gallery" }] : []),
   { name: "about", url: "/about" },
   { name: "contact", url: "/contact" },
 ];
 ---
 
-{/* Narrow: a tab strip. The active tab inverts to paper and carries the
-    hazard-yellow marker — no lifting, no easing. */}
-<nav class="panel-invert grid w-full grid-cols-4 lg:hidden">
-  {
-    links.map((link) => {
-      const isActive = activePath === link.url;
+{/* Narrow: a tab strip that gets out of the way. The active tab inverts to
+    paper and carries the hazard-yellow marker — no lifting, no easing. Once
+    the page is scrolled the strip closes onto a chevron (see the script
+    below); the chevron, or scrolling back to the top, opens it again. The
+    chevron sits inside the same box as the strip and is positioned over it,
+    so the box has one height to travel between the two states. */}
+<div class="nav-collapse lg:hidden" data-nav-collapse>
+  <nav
+    id="nav-tabs"
+    class="panel-invert grid w-full"
+    style={`grid-template-columns: repeat(${links.length}, minmax(0, 1fr))`}
+  >
+    {
+      links.map((link) => {
+        const isActive = path === link.url;
 
-      return (
-        <a
-          href={link.url}
-          aria-current={isActive ? "page" : undefined}
-          class:list={[
-            "label flex flex-col items-center justify-center border-r border-grey-700 px-2 py-3 text-center last:border-r-0",
-            isActive
-              ? "bg-paper text-ink"
-              : "text-paper-pure hover:bg-grey-900",
-          ]}
-        >
-          <span>{link.name}</span>
-          <span
-            class:list={["mt-2 h-[2px] w-6", isActive ? "bg-warning" : "bg-transparent"]}
-            aria-hidden="true"
-          />
-        </a>
-      );
-    })
-  }
-</nav>
+        return (
+          <a
+            href={link.url}
+            aria-current={isActive ? "page" : undefined}
+            class:list={[
+              "label flex flex-col items-center justify-center border-r border-grey-700 px-2 py-3 text-center last:border-r-0",
+              isActive
+                ? "bg-paper text-ink"
+                : "text-paper-pure hover:bg-grey-900",
+            ]}
+          >
+            <span>{link.name}</span>
+            <span
+              class:list={["mt-2 h-[2px] w-6", isActive ? "bg-warning" : "bg-transparent"]}
+              aria-hidden="true"
+            />
+          </a>
+        );
+      })
+    }
+  </nav>
+
+  <button
+    type="button"
+    class="nav-collapse-reveal panel-invert w-full"
+    aria-controls="nav-tabs"
+    aria-expanded="true"
+    aria-label="Show navigation"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      aria-hidden="true"
+    >
+      <path d="M5 9l7 7 7-7" />
+    </svg>
+  </button>
+</div>
 
 {/* Wide: the index column. */}
 <nav class="panel-invert hidden shrink-0 flex-col lg:flex lg:w-40">
   {
     links.map((link) => {
-      const isActive = activePath === link.url;
+      const isActive = path === link.url;
+
+      // Inside a project, the row becomes the dropdown: its siblings sit
+      // under it so you can move between records without going back to the
+      // catalogue. Native <details>, so it needs no script, and it is open on
+      // arrival with the record being read already in view.
+      if (link.url === "/projects" && inProject) {
+        return (
+          <details class="nav-group border-b border-grey-700" open>
+            {/* The label is the link back to the catalogue and fills the row;
+                the marker drawn on the summary is the only part left to
+                click, so it is the only thing that toggles. */}
+            <summary class="label flex items-center pr-2">
+              <a
+                href={link.url}
+                class="flex flex-1 items-center gap-1.5 px-4 py-4 text-paper-pure hover:bg-grey-900 hover:text-warning"
+              >
+                <span class="h-[6px] w-[6px] shrink-0 bg-warning" aria-hidden="true" />
+                <span>{link.name}</span>
+              </a>
+            </summary>
+
+            {projects.map((project) => {
+              const url = `/projects/${project.id}`;
+              const current = path === url;
+
+              return (
+                <a
+                  href={url}
+                  title={project.data.title}
+                  aria-current={current ? "page" : undefined}
+                  class:list={[
+                    "label block border-t border-grey-800 py-2.5 pr-3 pl-7 text-micro",
+                    current
+                      ? "bg-paper text-ink"
+                      : "text-grey-300 hover:bg-grey-900 hover:text-warning",
+                  ]}
+                >
+                  <span class="nav-truncate">{project.data.title}</span>
+                </a>
+              );
+            })}
+          </details>
+        );
+      }
 
       return (
         <a
@@ -67,3 +158,117 @@ const links = [
 
   <div class="grid-lines mt-auto min-h-16 flex-1 opacity-20"></div>
 </nav>
+
+<script>
+  // Mobile only: the tab strip is the first thing on the page, so on a short
+  // screen it spends height on navigation the reader isn't using. Once the
+  // page is scrolled it closes onto a chevron; the chevron, or scrolling back
+  // to the top, opens it again. The travel itself is a CSS height transition
+  // (see `.nav-collapse` in style.css) — all this does is decide the state
+  // and hand the two heights to it.
+  const DOWN = 24; // how far down the page counts as "scrolled"
+  const TOP = 4; // how close to the top counts as "back"
+  // After a manual reveal, the strip holds until the reader scrolls on past
+  // this much again — otherwise the next flick of the thumb shuts it.
+  const HOLD = 48;
+
+  const desktop = window.matchMedia("(min-width: 64rem)");
+
+  let detach: (() => void) | null = null;
+
+  // Layout.astro scrolls inside #container; LandingLayout.astro scrolls the
+  // page — and carries no nav, but the lookup stays honest either way.
+  function scroller(): Element {
+    const container = document.getElementById("container");
+    return container && getComputedStyle(container).overflowY === "auto"
+      ? container
+      : (document.scrollingElement ?? document.documentElement);
+  }
+
+  function setup() {
+    detach?.();
+    detach = null;
+
+    const bar = document.querySelector<HTMLElement>("[data-nav-collapse]");
+    const strip = bar?.querySelector<HTMLElement>("nav");
+    const button = bar?.querySelector<HTMLButtonElement>(".nav-collapse-reveal");
+    if (!bar || !strip || !button) return;
+
+    if (desktop.matches) {
+      // The whole bar is hidden at this width; leave no collapsed state
+      // behind for the next trip down to a narrow one.
+      bar.removeAttribute("data-collapsed");
+      bar.removeAttribute("data-nav-ready");
+      return;
+    }
+
+    const el = scroller();
+    let floor = 0;
+    let frame = 0;
+
+    // Measured, not guessed: the strip's height follows the type scale, and
+    // the type scale steps with the viewport.
+    function measure() {
+      bar!.style.setProperty("--nav-h", `${strip!.offsetHeight}px`);
+      bar!.style.setProperty("--nav-h-collapsed", `${button!.offsetHeight}px`);
+    }
+
+    function show(open: boolean) {
+      bar!.toggleAttribute("data-collapsed", !open);
+      button!.setAttribute("aria-expanded", String(open));
+    }
+
+    function evaluate() {
+      const y = el.scrollTop;
+      if (y <= TOP) {
+        floor = 0;
+        show(true);
+      } else if (y > Math.max(DOWN, floor)) {
+        show(false);
+      }
+    }
+
+    // Scroll fires several times per frame on a touch screen, and the state
+    // change costs a layout. Deciding once per frame keeps the travel smooth
+    // and keeps the work off the scrolling thread's back.
+    function onScroll() {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        evaluate();
+      });
+    }
+
+    function onClick() {
+      floor = el.scrollTop + HOLD;
+      show(true);
+    }
+
+    // The strip reflows when the viewport crosses a type-scale step, so the
+    // two heights are re-read rather than cached for the session.
+    const sizes = new ResizeObserver(measure);
+    sizes.observe(strip);
+    sizes.observe(button);
+
+    measure();
+    evaluate();
+    // Settle the opening state first, then arm the transition, so arriving
+    // part-way down a page is a state and not a performance.
+    const arm = requestAnimationFrame(() => bar.setAttribute("data-nav-ready", ""));
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    button.addEventListener("click", onClick);
+
+    detach = () => {
+      if (frame) cancelAnimationFrame(frame);
+      cancelAnimationFrame(arm);
+      sizes.disconnect();
+      bar.removeAttribute("data-nav-ready");
+      el.removeEventListener("scroll", onScroll);
+      button.removeEventListener("click", onClick);
+    };
+  }
+
+  document.addEventListener("astro:page-load", setup);
+  desktop.addEventListener("change", setup);
+</script>

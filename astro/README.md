@@ -144,6 +144,49 @@ Confluence tree becomes its `category` / `subcategory` — `Portfolio Home >
 Digital Products > Tools > ClearWeb` yields category "Digital Products",
 subcategory "Tools".
 
+### Media on a page
+
+Write a feature list the obvious way — a line of prose, the visual it describes,
+the next line, the next visual. It crosses over in that order, the prose as
+prose and each visual as a figure of its own. Nothing to indicate. A figure
+shows a caption only where you filled in Confluence's caption field, which it
+then carries underneath, inside its frame — adjacent prose becomes a caption
+only inside a carousel, which is the paragraph below.
+
+A **carousel** is for a set of visuals that are variations of one thing: stills
+of one flow, a screen in three states. Three ways to get one, and all of them
+need at least two visuals — one stays an ordinary figure:
+
+| On the page | What collapses |
+| --- | --- |
+| `### [Gallery] Onboarding stills` | every visual in that section, wherever it sits |
+| `[Gallery]` in a paragraph of its own, or closing a caption | the run of visuals right after it |
+| nothing | a heading, at most one line of context, then only visuals |
+
+`[Carousel]` reads the same as `[Gallery]`, and the marker is stripped from the
+page either way. The set is titled by its heading — or by `[Gallery: Some
+title]`, or the **bold lead-in** of the caption the marker sits in.
+
+**Captions.** Inside a `[Gallery]` section the paragraph *directly above* a
+visual becomes that slide's caption and moves into the slide; a paragraph
+further off (a section intro, say) stays in the copy. Confluence's own caption
+field on the image beats it, and is the only way to caption a slide in the
+other two forms. Bold, italic and inline code survive; anything richer
+flattens to its text. Alt text is the editor's alt field, and is not a caption.
+
+**Photos, GIFs and clips.** GIFs need nothing — `optimize.mjs` passes animations
+through at full size on purpose. An `.mp4`, `.webm` or `.mov` attachment,
+inserted as media like any image, becomes a muted looping player with controls
+and can share a set with stills.
+
+**What lands in the grid at the bottom.** `Hero media: file.gif` in the metadata
+block picks the hero, and it has to be a still: the page header and the
+catalogue card are both `<img>`, so a clip named there is passed over for the
+first still the page uses, and a page carrying nothing but clips draws the
+no-hero skeleton instead. Every other attachment the page references that
+isn't a carousel slide falls into the page's flat media grid. To keep something out of
+that grid, put it in a carousel.
+
 ### Hand-authored vs synced
 
 Both live in `src/content/projects/`. A file carrying `confluenceId` in its
@@ -173,6 +216,21 @@ pnpm sync:confluence --dry-run   # report what would change, write nothing
 pnpm sync:confluence
 pnpm assets:push
 ```
+
+## Feature flags
+
+`src/lib/flags.mjs` holds build-time flags. Flip one and redeploy.
+
+`gallery` is **off**: `src/content/gallery/` still holds only placeholder
+entries pointing at Unsplash. The gallery's pages live in
+`src/features/gallery/` rather than `src/pages/`, so Astro's file router never
+sees them — `integrations/feature-routes.mjs` injects `/gallery` and
+`/gallery/[slug]` only while the flag is set. A disabled feature therefore
+emits no HTML at all, rather than shipping pages that merely aren't linked.
+
+The same flag drives everything that would point at it: `ui/Nav.astro` and its
+column count, the landing rows, the 404's suggested destinations, and
+`ScrollPager`'s page order. Turning it on needs no other edit.
 
 ## Deployment
 

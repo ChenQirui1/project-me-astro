@@ -90,6 +90,27 @@
   --scale: 1.25;
 }
 
+/* Phones get the same sheet a step smaller. `--scale` is the one multiplier
+   the type scale, the spacing ladder, control heights and the root font size
+   all read, so dropping it shrinks everything in proportion instead of
+   leaving 19px body copy on a 390px screen. Media-query rems are always the
+   browser's 16px, so this breakpoint doesn't move with the scale it sets. */
+@media (max-width: 30rem) {
+  :root {
+    --scale: 1.1;
+  }
+}
+
+/* Narrower still — a 375px iPhone SE, or a 360px Android — takes the system
+   at its drawn size. The scale is a magnifier for roomy screens; there is no
+   room to magnify here, and the masthead has to fit a wordmark, two icon
+   cells and the call to action across the width. */
+@media (max-width: 24rem) {
+  :root {
+    --scale: 1;
+  }
+}
+
 @theme static {
   /* --- Scale (px at 1x — this is a print-label system, not fluid web) --- */
   --text-nano: calc(7px * var(--scale));
@@ -202,6 +223,9 @@
   --dur-instant: 0ms;
   --dur-fast: 80ms;
   --dur-base: 140ms;
+  /* The one thing on the site that travels rather than switches: the narrow
+     tab strip closing. Linear, so it reads as a shutter and not a spring. */
+  --dur-slow: 220ms;
   --transition-invert: background-color var(--dur-fast) var(--ease-linear),
     color var(--dur-fast) var(--ease-linear),
     border-color var(--dur-fast) var(--ease-linear);
@@ -381,6 +405,17 @@
     letter-spacing: var(--track-label);
   }
 
+  /* A catalogue record's values are sentences, not serial numbers. The mono
+     face, the label tracking and the label leading belong to stamps and
+     corner marks; a 150-character context line set in them is hard to read.
+     The value takes the reading type and normal tracking, while the `dt`
+     beside it keeps its label treatment, which is what makes the pair read
+     as a record. */
+  .record-value {
+    font: var(--type-body);
+    letter-spacing: normal;
+  }
+
   .script {
     font-family: var(--font-script);
     font-weight: var(--weight-regular);
@@ -397,6 +432,10 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
+    /* A label is a stamp: "get in touch" breaking over two lines reads as a
+       mistake, and on a 375px masthead there is just enough room for it to
+       happen. */
+    white-space: nowrap;
     min-height: var(--control-h-lg);
     padding: var(--space-2) var(--space-6);
     border: var(--hairline);
@@ -521,6 +560,137 @@
     padding: var(--space-5) var(--space-5) var(--space-6);
   }
 
+  /* Prose inside a collapsed block keeps the copy column's rhythm. `.copy > *
+     + *` only reaches direct children, so without this the paragraphs inside
+     a disclosure run together and an opened section reads nothing like the
+     page around it. Headings inside already take their margin from
+     `.copy h3`, so a research section spaces like a decision does. */
+  .copy .accordion-body > * + * {
+    margin-top: var(--space-6);
+  }
+
+  /* The narrow tab strip's collapsed state. The strip and the chevron are
+     stacked in one box: the box's height travels between the two heights, the
+     strip fades as it is clipped, and the chevron fades in pinned to the
+     bottom edge. So the bar closes onto the chevron rather than swapping for
+     it, and the copy below slides up with the edge instead of jumping.
+
+     Both heights are measured in the script, because the strip's height
+     follows the type scale and the type scale steps with the viewport. Until
+     that runs the box sizes to the strip, which is the open state, so the
+     markup still renders correctly with no script at all. */
+  .nav-collapse {
+    position: relative;
+    height: var(--nav-h, auto);
+    overflow: hidden;
+  }
+
+  /* Armed only after the first frame, so a page restored mid-scroll arrives
+     collapsed instead of animating itself shut in front of the reader. */
+  .nav-collapse[data-nav-ready] {
+    transition: height var(--dur-slow) var(--ease-linear);
+  }
+
+  .nav-collapse[data-collapsed] {
+    height: var(--nav-h-collapsed, auto);
+  }
+
+  /* The strip holds its own height while the box shrinks past it — that is
+     what makes the clip read as a closing shutter and not a squash. `display`
+     still comes from Tailwind's `grid` utility; nothing fights it for that
+     property any more. */
+  .nav-collapse > nav {
+    transition: opacity var(--dur-base) var(--ease-linear);
+  }
+
+  .nav-collapse[data-collapsed] > nav {
+    opacity: 0;
+    /* Clipped out of sight, so also out of reach of the pointer and of the
+       tab order — but not until the travel is over, or it vanishes early. */
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-linear),
+      visibility 0s var(--ease-linear) var(--dur-slow);
+  }
+
+  .nav-collapse-reveal {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2) 0;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--dur-base) var(--ease-linear),
+      visibility 0s var(--ease-linear) var(--dur-base);
+  }
+
+  .nav-collapse[data-collapsed] .nav-collapse-reveal {
+    opacity: 1;
+    visibility: visible;
+    /* Held back a beat so the strip is on its way out before the chevron
+       arrives, instead of the two crossing over the middle of the travel. */
+    transition: opacity var(--dur-base) var(--ease-linear) var(--dur-fast);
+  }
+
+  /* Hover stays an instant inversion, like every other control. */
+  .nav-collapse-reveal:hover {
+    background: var(--grey-900);
+    color: var(--yellow);
+  }
+
+  /* Asked for less motion, it goes back to being a swap. */
+  @media (prefers-reduced-motion: reduce) {
+    .nav-collapse[data-nav-ready],
+    .nav-collapse > nav,
+    .nav-collapse[data-collapsed] > nav,
+    .nav-collapse-reveal,
+    .nav-collapse[data-collapsed] .nav-collapse-reveal {
+      transition: none;
+    }
+  }
+
+  /* The index column's projects dropdown. Native <details>, so it needs no
+     script: the marker is drawn from the open state, like the accordion's. */
+  .nav-group > summary {
+    list-style: none;
+  }
+
+  .nav-group > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* The row is a link to the catalogue, so only the marker toggles: it is the
+     one part of the summary not covered by the anchor, and it carries the
+     pointer to say so. */
+  .nav-group > summary {
+    cursor: default;
+  }
+
+  .nav-group > summary::after {
+    content: "+";
+    margin-left: auto;
+    padding-inline: var(--space-2);
+    font: var(--type-data);
+    cursor: pointer;
+  }
+
+  .nav-group[open] > summary::after {
+    content: "\2212";
+  }
+
+  /* A project title is longer than the 160px index column, so it clips with
+     an ellipsis. The full title is on the link's `title`. */
+  .nav-truncate {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
   /* Inline text link — the sheet's underlined accent link, kept for prose. */
   .link {
     color: var(--accent);
@@ -608,8 +778,7 @@
   }
 
   .copy h1,
-  .copy h2,
-  .copy h3 {
+  .copy h2 {
     display: inline-block;
     margin-top: var(--space-9);
     padding: var(--space-1) var(--space-3);
@@ -618,6 +787,19 @@
     font: var(--type-label);
     letter-spacing: var(--track-label);
     text-transform: uppercase;
+  }
+
+  /* A claim inside a section — "The website's job is a shortlist place" — is
+     a sub-heading, not a label: the plate is what the rail uses, and stamping
+     every claim with one competes with it. So h3 stays in the reading type
+     and earns its weight from bold alone. */
+  .copy h3 {
+    display: block;
+    margin-top: var(--space-8);
+    font-size: inherit;
+    font-weight: var(--weight-bold);
+    letter-spacing: inherit;
+    text-transform: none;
   }
 
   .copy h1:first-child,
@@ -707,6 +889,42 @@
     margin-top: var(--space-6);
   }
 
+  /* A clip reads as an image that happens to move: same frame, same width. */
+  .copy video {
+    display: block;
+    width: 100%;
+    border: var(--hairline);
+    background: var(--paper-pure);
+  }
+
+  /* Clears the browser's own figure margin. Wrapped in `:where()` so it
+     carries no specificity: `.copy figure` would otherwise out-rank the
+     `* + *` rhythm above and sit a captioned visual flush against the
+     paragraph before it. */
+  :where(.copy figure) {
+    margin: 0;
+  }
+
+  /* A visual that carried a caption — the plate takes the frame so the caption
+     sits inside it, under the visual, the way a slide's does. */
+  .copy figure.media {
+    border: var(--hairline);
+    background: var(--paper-pure);
+  }
+
+  .copy figure.media img,
+  .copy figure.media video {
+    border: 0;
+  }
+
+  .copy figcaption {
+    padding: var(--pad-panel);
+    border-top: var(--hairline);
+    font: var(--type-body);
+    font-size: var(--text-caption);
+    color: var(--text-muted);
+  }
+
   .copy blockquote {
     margin: 0;
     padding-left: var(--space-6);
@@ -738,5 +956,166 @@
     height: 0;
     border: 0;
     border-top: var(--frame);
+  }
+
+  /* --- Carousel -------------------------------------------------------- */
+
+  /* A set of images from one Confluence section (scripts/confluence-storage
+     .mjs writes the markup; components/Carousel.astro adds the bar below).
+     The track is a snap strip first and a carousel second: with no script it
+     still swipes, snaps and shows its scrollbar as the affordance. */
+  .carousel {
+    display: flex;
+    /* Slides share the tallest slide's height, so the frame doesn't resize as
+       the captions change length. */
+    align-items: stretch;
+    gap: var(--gutter);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    /* A swipe that runs off the end stays in the track rather than paging the
+       panel behind it. */
+    overscroll-behavior-x: contain;
+    border: var(--hairline);
+    /* Slides are letterboxed on a white plate, so a portrait shot next to a
+       landscape one doesn't resize the frame. */
+    background: var(--paper-pure);
+  }
+
+  /* One slide per view: the visual, and under it the caption it carried. */
+  .carousel-slide {
+    flex: 0 0 100%;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin: 0;
+    scroll-snap-align: start;
+  }
+
+  /* Beats `.copy img` on class count: no frame of its own (the track carries
+     it), no stacking margin. The visual takes whatever the caption leaves. */
+  .copy .carousel-slide img,
+  .copy .carousel-slide video {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    max-height: min(70vh, 640px);
+    margin-top: 0;
+    border: 0;
+    object-fit: contain;
+  }
+
+  /* Pinned to the foot of its slide, so the captions of a set line up with
+     each other rather than tracking the height of the visual above them. */
+  .carousel-slide figcaption {
+    flex: none;
+    margin-top: auto;
+    border-top: var(--hairline);
+  }
+
+  /* The fallback track, written by hand as bare visuals rather than figures. */
+  .copy .carousel > img,
+  .copy .carousel > video {
+    flex: 0 0 100%;
+    width: 100%;
+    max-height: min(70vh, 640px);
+    margin-top: 0;
+    border: 0;
+    object-fit: contain;
+    scroll-snap-align: start;
+  }
+
+  .carousel-frame {
+    margin: 0;
+  }
+
+  /* The ink strip under the frame: controls, the heading the section carried,
+     and the count. `.bar` supplies the ink, the row height and the padding. */
+  .carousel-bar {
+    border: var(--hairline);
+    border-top: 0;
+  }
+
+  .carousel-nav {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--row-h);
+    height: var(--row-h);
+    padding: 0;
+    border: var(--hairline-invert);
+    background: transparent;
+    color: var(--text-invert);
+    font: var(--type-label);
+    cursor: pointer;
+    transition: var(--transition-invert);
+  }
+
+  .carousel-nav:hover:not(:disabled) {
+    background: var(--yellow);
+    border-color: var(--yellow);
+    color: var(--ink);
+  }
+
+  /* Ends are walls, not wrap-arounds — the counter says where you are, so the
+     control should agree. */
+  .carousel-nav:disabled {
+    color: var(--grey-600);
+    border-color: var(--grey-700);
+    cursor: default;
+  }
+
+  .carousel-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-invert);
+  }
+
+  /* One tick per slide: a scale across the set, inverting to signal yellow at
+     the slide on screen. */
+  .carousel-ticks {
+    flex: none;
+    display: flex;
+    gap: var(--gutter-tight);
+  }
+
+  .carousel-tick {
+    width: var(--space-3);
+    height: var(--space-3);
+    padding: 0;
+    border: var(--hairline-invert);
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition-invert);
+  }
+
+  .carousel-tick:hover {
+    background: var(--grey-400);
+    border-color: var(--grey-400);
+  }
+
+  .carousel-tick[aria-current="true"] {
+    background: var(--yellow);
+    border-color: var(--yellow);
+  }
+
+  .carousel-count {
+    flex: none;
+    color: var(--text-invert-muted);
+  }
+
+  /* Narrow bars drop the title before the controls: the heading is already
+     printed above the carousel in the copy. */
+  @media (max-width: 30rem) {
+    .carousel-title {
+      display: none;
+    }
+
+    .carousel-ticks {
+      flex: 1;
+    }
   }
 }

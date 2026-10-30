@@ -37,3 +37,8 @@ astro/assets/confluence/
 # Superseded: the asset manifest now lives in R2 so local runs and the build
 # container share one copy. See astro/scripts/assets.mjs.
 astro/assets/.manifest.json
+
+# Rewrites staged for pasting into Confluence, not for the site. Confluence is
+# the gate for what becomes public and this repo is not, so the drafts — which
+# name clients and carry the notes on what was cut — stay local.
+drafts/

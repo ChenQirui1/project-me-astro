@@ -6,6 +6,8 @@ const TYPES = {
   ".ico": "image/x-icon",
   ".jpeg": "image/jpeg",
   ".jpg": "image/jpeg",
+  ".m4v": "video/mp4",
+  ".mov": "video/quicktime",
   ".mp4": "video/mp4",
   ".pdf": "application/pdf",
   ".png": "image/png",

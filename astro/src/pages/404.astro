@@ -1,9 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { flags } from "../lib/flags.mjs";
 
 const destinations = [
   { name: "projects", href: "/projects" },
-  { name: "gallery", href: "/gallery" },
+  ...(flags.gallery ? [{ name: "gallery", href: "/gallery" }] : []),
   { name: "about", href: "/about" },
 ];
 ---

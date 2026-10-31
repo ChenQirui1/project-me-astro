@@ -88,43 +88,56 @@
      `html` below), which carries Tailwind's rem utilities along. Hairlines,
      the focus ring and the fill textures stay at their drawn size. */
   --scale: 1.25;
+
+  /* A second multiplier, on the type scale only. What limits the system on a
+     phone is horizontal room for chrome — the masthead has to fit a wordmark,
+     two icon cells and the call to action across 360px — not reading size. So
+     `--scale` keeps the furniture to the width available while this lifts the
+     text inside it. 1 everywhere the sheet is already roomy. */
+  --type-boost: 1;
 }
 
 /* Phones get the same sheet a step smaller. `--scale` is the one multiplier
    the type scale, the spacing ladder, control heights and the root font size
    all read, so dropping it shrinks everything in proportion instead of
-   leaving 19px body copy on a 390px screen. Media-query rems are always the
-   browser's 16px, so this breakpoint doesn't move with the scale it sets. */
+   leaving 19px body copy on a 390px screen. That proportion is right for the
+   furniture but costs the text more than it should, so `--type-boost` hands
+   the type back most of what the step down took. Media-query rems are always
+   the browser's 16px, so this breakpoint doesn't move with the scale it
+   sets. */
 @media (max-width: 30rem) {
   :root {
     --scale: 1.1;
+    --type-boost: 1.15;
   }
 }
 
-/* Narrower still — a 375px iPhone SE, or a 360px Android — takes the system
-   at its drawn size. The scale is a magnifier for roomy screens; there is no
-   room to magnify here, and the masthead has to fit a wordmark, two icon
-   cells and the call to action across the width. */
+/* Narrower still — a 375px iPhone SE, or a 360px Android — takes the
+   furniture at its drawn size: the masthead has to fit a wordmark, two icon
+   cells and the call to action across the width, and there is no room to
+   magnify that. The type keeps its boost, which is the point of the split —
+   the text stays readable while the chrome stops growing. */
 @media (max-width: 24rem) {
   :root {
     --scale: 1;
+    --type-boost: 1.15;
   }
 }
 
 @theme static {
   /* --- Scale (px at 1x — this is a print-label system, not fluid web) --- */
-  --text-nano: calc(7px * var(--scale));
-  --text-micro: calc(8px * var(--scale));
-  --text-label: calc(9px * var(--scale));
-  --text-caption: calc(10px * var(--scale));
-  --text-body: calc(11px * var(--scale));
-  --text-body-lg: calc(13px * var(--scale));
-  --text-lede: calc(15px * var(--scale));
-  --text-h3: calc(20px * var(--scale));
-  --text-h2: calc(30px * var(--scale));
-  --text-h1: calc(46px * var(--scale));
-  --text-display: calc(72px * var(--scale));
-  --text-display-xl: calc(116px * var(--scale));
+  --text-nano: calc(7px * var(--scale) * var(--type-boost));
+  --text-micro: calc(8px * var(--scale) * var(--type-boost));
+  --text-label: calc(9px * var(--scale) * var(--type-boost));
+  --text-caption: calc(10px * var(--scale) * var(--type-boost));
+  --text-body: calc(11px * var(--scale) * var(--type-boost));
+  --text-body-lg: calc(13px * var(--scale) * var(--type-boost));
+  --text-lede: calc(15px * var(--scale) * var(--type-boost));
+  --text-h3: calc(20px * var(--scale) * var(--type-boost));
+  --text-h2: calc(30px * var(--scale) * var(--type-boost));
+  --text-h1: calc(46px * var(--scale) * var(--type-boost));
+  --text-display: calc(72px * var(--scale) * var(--type-boost));
+  --text-display-xl: calc(116px * var(--scale) * var(--type-boost));
 }
 
 :root {
@@ -722,6 +735,20 @@
     color: var(--grey-400);
   }
 
+  /* A field's label, stamped on the top edge of its box. The offset backs out
+     the plate's own padding, so the label's text sits on the same left as the
+     text the reader types rather than the plate's edge being flush and the
+     two readings starting a few pixels apart. */
+  .field-label {
+    position: absolute;
+    top: 0;
+    left: calc(var(--space-4) - var(--space-2));
+    z-index: 10;
+    padding: var(--space-1) var(--space-2);
+    background: var(--ink);
+    color: var(--text-invert);
+  }
+
   .field:focus {
     outline: var(--focus-ring);
     outline-offset: 0;
@@ -777,23 +804,39 @@
     margin-top: var(--space-6);
   }
 
+  /* A section's plate. It is set at the label's weight and case but the
+     lede size: at the label's 9px it read as a caption on top of 15px body
+     copy, which left a section looking unheaded, and at the h3's 20px the
+     plate shouted over the copy it heads. Matching the body size is enough
+     — the plate is what marks a heading here, not the scale. The tracking
+     comes back to the heading's, since the label's 0.06em is spaced for
+     small caps and gapes above 9px. */
   .copy h1,
   .copy h2 {
     display: inline-block;
     margin-top: var(--space-9);
-    padding: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-4);
     background: var(--ink);
     color: var(--text-invert);
     font: var(--type-label);
-    letter-spacing: var(--track-label);
+    font-size: var(--text-lede);
+    letter-spacing: var(--track-heading);
     text-transform: uppercase;
   }
 
   /* A claim inside a section — "The website's job is a shortlist place" — is
      a sub-heading, not a label: the plate is what the rail uses, and stamping
-     every claim with one competes with it. So h3 stays in the reading type
-     and earns its weight from bold alone. */
-  .copy h3 {
+     every claim with one competes with it. So these stay in the reading type
+     and earn their weight from bold alone.
+
+     h4 and below are here because Confluence writes them: a Heading 4 inside
+     an expand macro arrives as <h4>, and Tailwind's preflight strips every
+     heading to inherited size and weight, so one left out of this rule reads
+     as plain body copy. */
+  .copy h3,
+  .copy h4,
+  .copy h5,
+  .copy h6 {
     display: block;
     margin-top: var(--space-8);
     font-size: inherit;
@@ -804,7 +847,10 @@
 
   .copy h1:first-child,
   .copy h2:first-child,
-  .copy h3:first-child {
+  .copy h3:first-child,
+  .copy h4:first-child,
+  .copy h5:first-child,
+  .copy h6:first-child {
     margin-top: 0;
   }
 
@@ -830,9 +876,16 @@
      left and stays pinned while its section scrolls past. The text column
      keeps its place; only the rail reaches into the margin. Measured on the
      scrolling panel, not the viewport, since the side nav eats into it. */
-  @container main (min-width: 1180px) {
+  @container main (min-width: 1270px) {
     .copy-section {
-      --rail: 176px;
+      /* Wide enough for a two-word heading on one line. The plate is an
+         inline-block in a fixed column, so anything wider than the rail
+         wraps, and at the plate's size "KEY FEATURES" no longer fits 176px.
+         The rail reaches into the margin, so it can only be as wide as the
+         margin is: the centred 820px column leaves (panel - 820) / 2 plus
+         the sheet's own padding, which is why the threshold moves with it.
+         A heading written as a sentence still wraps, and should. */
+      --rail: 224px;
       --rail-gap: var(--space-8);
       display: grid;
       grid-template-columns: var(--rail) minmax(0, 1fr);
@@ -877,9 +930,17 @@
     list-style: square;
   }
 
+  /* Shown at its own size, never stretched to the column. Several of the
+     Confluence attachments are phone screenshots 400-odd pixels wide, and
+     filling 820 with them made them soft; the margin either side is the
+     honest version. `max-width` still caps anything larger.
+     (`.copy .carousel-slide img` below out-ranks this: a slide is letterboxed
+     by the track and does fill its width.) */
   .copy img {
     display: block;
-    width: 100%;
+    width: auto;
+    max-width: 100%;
+    margin-inline: auto;
     border: var(--hairline);
   }
 
@@ -889,10 +950,12 @@
     margin-top: var(--space-6);
   }
 
-  /* A clip reads as an image that happens to move: same frame, same width. */
+  /* A clip reads as an image that happens to move: same frame, same sizing. */
   .copy video {
     display: block;
-    width: 100%;
+    width: auto;
+    max-width: 100%;
+    margin-inline: auto;
     border: var(--hairline);
     background: var(--paper-pure);
   }
@@ -908,6 +971,12 @@
   /* A visual that carried a caption — the plate takes the frame so the caption
      sits inside it, under the visual, the way a slide's does. */
   .copy figure.media {
+    /* The plate hugs the visual rather than the column, so a narrow shot
+       keeps its caption to its own width instead of stranding one line
+       across a full-width box. */
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
     border: var(--hairline);
     background: var(--paper-pure);
   }
@@ -921,7 +990,10 @@
     padding: var(--pad-panel);
     border-top: var(--hairline);
     font: var(--type-body);
-    font-size: var(--text-caption);
+    /* One step under the body copy, not two — at the caption size a line
+       that explains what the visual shows was harder to read than the page
+       it sits in. The muted ink keeps it subordinate without shrinking it. */
+    font-size: var(--text-body-lg);
     color: var(--text-muted);
   }
 
@@ -976,9 +1048,10 @@
        panel behind it. */
     overscroll-behavior-x: contain;
     border: var(--hairline);
-    /* Slides are letterboxed on a white plate, so a portrait shot next to a
-       landscape one doesn't resize the frame. */
-    background: var(--paper-pure);
+    /* Slides are letterboxed, so a portrait shot next to a landscape one
+       doesn't resize the frame. The letterboxing is the panel's own paper
+       rather than a whiter plate: against the page it read as a lit box. */
+    background: var(--surface-panel);
   }
 
   /* One slide per view: the visual, and under it the caption it carried. */
@@ -1117,5 +1190,160 @@
     .carousel-ticks {
       flex: 1;
     }
+  }
+
+  /* --- Two-column sections --------------------------------------------- */
+
+  /* A Confluence two-column layout section, kept rather than flattened (see
+     `two_equal` in scripts/confluence-storage.mjs). The author put two things
+     beside each other, so they stay beside each other — until the column is
+     too narrow for that to be legible, where they stack in document order. */
+  .columns {
+    display: grid;
+    /* The cell count rides in on the element, so a two- and a three-column
+       section share one rule. */
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .column {
+    min-width: 0;
+  }
+
+  /* The flow rhythm is the parent's; inside a cell the children carry it. */
+  .column > * + * {
+    margin-top: var(--space-6);
+  }
+
+  /* Narrow enough and the columns stack in document order. Three across
+     needs the step in between: side by side is unreadable on a phone, and
+     stacking all three throws away a tablet's width. */
+  @media (max-width: 56rem) {
+    .columns {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .columns {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* --- Lightbox --------------------------------------------------------- */
+
+  /* A visual on its own (components/Lightbox.astro builds the dialog). The
+     page is ink and the panels are paper, so the backdrop is the page and the
+     frame is one more panel standing on it. */
+  .lightbox {
+    max-width: 100vw;
+    max-height: 100vh;
+    margin: auto;
+    padding: var(--gutter);
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .lightbox::backdrop {
+    background: var(--ink);
+    opacity: 0.92;
+  }
+
+  .lightbox-frame {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    border: var(--hairline);
+    background: var(--surface-panel);
+  }
+
+  /* Never scaled past its own size: an attachment 400 pixels wide has no more
+     detail to give a full screen, and stretching it only softens what the
+     page already showed sharply. */
+  .lightbox-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: calc(100vw - 2 * var(--gutter));
+    /* The strips above and below the picture take the rest. */
+    max-height: calc(100vh - 2 * var(--gutter) - 2 * var(--row-h-lg));
+    object-fit: contain;
+  }
+
+  /* Two ink strips, the same one a carousel wears: the close above the
+     picture, the caption below it. The close sits in a strip of its own
+     rather than over the image — a control on top of the picture covers the
+     corner it is meant to leave alone. */
+  .lightbox-head {
+    justify-content: flex-end;
+    border-bottom: var(--hairline);
+  }
+
+  .lightbox-bar {
+    justify-content: space-between;
+    border-top: var(--hairline);
+  }
+
+  .lightbox-note {
+    min-width: 0;
+    color: var(--text-invert-muted);
+    text-transform: none;
+  }
+
+  /* `.bar` sets display:flex, which would outrank the hidden attribute's
+     own display:none — so say it here. The bar carries only the caption now,
+     and a visual without one has no bar at all. */
+  .lightbox-bar[hidden] {
+    display: none;
+  }
+
+  /* Right-aligned in the head strip. Padding rather than a fixed square, so
+     the strip is as tall as the glyph needs and no taller. */
+  .lightbox-close {
+    flex: none;
+    padding: var(--space-2) var(--space-4);
+    border: 0;
+    background: transparent;
+    color: var(--text-invert);
+    font: var(--type-h3);
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .lightbox-close:hover,
+  .lightbox-close:focus-visible {
+    background: var(--yellow);
+    color: var(--ink);
+  }
+
+  /* The visuals that open one say so. */
+  .copy img[role="button"],
+  [data-lightbox] img[role="button"] {
+    cursor: zoom-in;
+  }
+}
+
+/* Arriving from the landing page — and only then — the interior lights up
+   rather than switching on. Everywhere else a page change stays a swap, which
+   is what the layouts' `animate="none"` already gives; the attribute is set
+   by components/PageTransition.astro for the duration of that one transition,
+   and the extra `:root[data-lit]` is what outranks the `none`.
+   The masthead and the index column ride the root transition rather than a
+   named one, so both are named here or they would finish while the interior
+   was still coming up.
+   View-transition pseudo-elements are document-level and cannot sit inside a
+   cascade layer. */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-lit]::view-transition-new(root),
+  :root[data-lit]::view-transition-new(interior) {
+    animation: lit-up 0.5s linear forwards;
+  }
+}
+
+@keyframes lit-up {
+  from {
+    opacity: 0;
   }
 }

@@ -1,6 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Carousel from "../../components/Carousel.astro";
+import Lightbox from "../../components/Lightbox.astro";
 import { getCollection, render } from "astro:content";
 import { asset } from "../../lib/assets";
 
@@ -24,23 +25,10 @@ const mediums =
       ? project.data.medium.split(",").map((m) => m.trim())
       : [];
 
-// A mirrored attachment may be a clip; the media grid has to play those
-// rather than try to show them.
-const isClip = (url: string) => /\.(?:mp4|webm|mov|m4v)$/i.test(url);
-
 // What kind of project this is, shown above the year. Synced pages rarely fill
 // in a project type, so fall back to where the page sits in the Confluence tree.
 const kind =
   project.data.projectType ?? project.data.subcategory ?? project.data.category;
-
-// Catalogue facts worth showing, skipping anything the page hasn't filled in.
-// Type is left out: it already heads the page beside the title.
-const facts = [
-  ["context", project.data.context],
-  ["status", project.data.status],
-  ["role", project.data.role],
-  ["collaborators", project.data.collaborators.join(", ") || null],
-].filter(([, value]) => Boolean(value)) as [string, string][];
 
 const projects = (await getCollection("projects")).sort(
   (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0),
@@ -50,7 +38,13 @@ const prevId = projects[(currentIndex - 1 + projects.length) % projects.length].
 const nextId = projects[(currentIndex + 1) % projects.length].id;
 ---
 
-<Layout title={project.data.title}>
+<Layout
+  title={project.data.title}
+  description={project.data.description}
+  image={asset(project.data.thumbnail)}
+  imageAlt={project.data.title}
+  type="article"
+>
   <article class="mx-auto w-full max-w-[820px] p-4 sm:p-8">
     {/* Back Link — lands on this project's card in the catalogue */}
     <div class="mb-4">
@@ -62,29 +56,44 @@ const nextId = projects[(currentIndex + 1) % projects.length].id;
       </a>
     </div>
 
-    {/* Title Block (Matches: [TEST] horse) — year over type at the far right,
-        sitting on the title plate's baseline */}
-    <div class="flex items-end justify-between gap-4">
-      <h1 class="h2 inline-block bg-ink px-3 py-2 text-paper-pure uppercase">
+    {/* Title Block — year over type at the far right, sitting on the title
+        plate's baseline. On a phone there isn't room for both beside the
+        plate: a type as long as "Digital Products & Systems" was pushed off
+        the sheet, so the two become one meta line above the title instead,
+        free to wrap. Order, not DOM, moves it — the h1 stays first. */}
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+      <h1
+        class="h2 order-2 self-start bg-ink px-3 py-2 text-paper-pure uppercase sm:order-1"
+      >
         {project.data.title}
       </h1>
-      <div class="flex shrink-0 flex-col items-end pb-2 text-right">
+      <div
+        class="order-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:order-2 sm:min-w-0 sm:flex-col sm:items-end sm:pb-2 sm:text-right"
+      >
         <span class="h3 text-ink">{project.data.year}</span>
         {kind && <span class="label text-grey-600">{kind}</span>}
       </div>
     </div>
 
-    {/* Main Image — never taller than 16:9 of the column, so it lands above the
-        fold: wider images show whole, taller ones are cropped from the top.
+    {/* Main Image — shown whole, never cropped and never stretched. It sizes
+        itself: a wide hero fills the column, and a tall one (several of these
+        are phone screenshots) comes down to the 16:9 height cap and stands
+        centred with the margin either side, which keeps it above the fold and
+        at its own resolution instead of soft.
+        The frame is the box, not the image: a narrow hero is letterboxed in a
+        full-width plate the way a carousel slide is, rather than wearing a
+        hairline of its own out in the middle of the column.
         A dashed skeleton holds the slot when the project has no hero yet. */}
     <div class="@container mb-8">
       {
         project.data.thumbnail ? (
-          <img
-            src={asset(project.data.thumbnail)}
-            alt={project.data.title}
-            class="block max-h-[56.25cqw] w-full border border-ink object-cover object-top"
-          />
+          <div class="flex justify-center border border-ink bg-paper" data-lightbox>
+            <img
+              src={asset(project.data.thumbnail)}
+              alt={project.data.title}
+              class="block max-h-[56.25cqw] w-auto max-w-full"
+            />
+          </div>
         ) : (
           <div class="grid-lines flex aspect-video w-full items-center justify-center border border-dashed border-ink">
             <span class="micro text-grey-500">no hero media</span>
@@ -121,57 +130,14 @@ const nextId = projects[(currentIndex + 1) % projects.length].id;
         <Content />
       </div>
       <Carousel />
+      <Lightbox />
 
-      {/* Media gallery — attachments mirrored out of Confluence into R2 */}
-      {
-        project.data.gallery.length > 0 && (
-          <div class="border-t-2 border-ink pt-6">
-            <h2 class="label mb-4 inline-block bg-ink px-2 py-1 text-paper-pure">
-              media
-            </h2>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {project.data.gallery.map((item) =>
-                isClip(item) ? (
-                  <video
-                    src={asset(item)}
-                    controls
-                    muted
-                    loop
-                    playsinline
-                    preload="none"
-                    class="block w-full border border-ink"
-                  />
-                ) : (
-                  <img
-                    src={asset(item)}
-                    alt=""
-                    loading="lazy"
-                    class="block w-full border border-ink"
-                  />
-                ),
-              )}
-            </div>
-          </div>
-        )
-      }
+      {/* No media grid. Every visual the page uses is already placed in the
+          body, in the order the author wrote it; a flat grid of the same
+          attachments underneath only repeated them out of context. The
+          `gallery` frontmatter is still written by the sync, so nothing is
+          lost if it is wanted back. */}
 
-      {/* Catalogue record */}
-      {
-        facts.length > 0 && (
-          <dl class="grid grid-cols-[auto_1fr] border-t-2 border-b border-ink">
-            {facts.map(([label, value]) => (
-              <>
-                <dt class="label border-b border-grey-200 py-2 pr-6 text-grey-600 last:border-b-0">
-                  {label}
-                </dt>
-                <dd class="record-value border-b border-grey-200 py-2 text-ink last:border-b-0">
-                  {value}
-                </dd>
-              </>
-            ))}
-          </dl>
-        )
-      }
 
       {/* Prev / Next */}
       <div class="flex justify-between gap-4 border-t border-ink pt-6">

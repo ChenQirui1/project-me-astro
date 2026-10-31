@@ -1,0 +1,30 @@
+---
+// Marks the one navigation that gets an eased transition: the step in from
+// the landing page, where the black sheet gives way to a lit interior.
+//
+// Every other page change stays a swap, the way the rest of the system's
+// state changes are. The decision can't live in CSS, because it depends on
+// the page being left rather than the one arriving, so this records it and
+// `:root[data-lit]` in style.css carries the animation.
+//
+// Included by both layouts: the first event fires on the document being left,
+// which is the landing page, and the second on the one arriving.
+---
+
+<script>
+  import type { TransitionBeforePreparationEvent } from "astro:transitions/client";
+
+  // Module state, not an attribute: Astro replaces the root element's
+  // attributes with the incoming document's during the swap, so anything set
+  // before then is gone by the time the animation plays.
+  let lit = false;
+
+  document.addEventListener("astro:before-preparation", (event) => {
+    lit = new URL((event as TransitionBeforePreparationEvent).from).pathname === "/";
+  });
+
+  // Inside the view transition, after the swap and before the animation runs.
+  document.addEventListener("astro:after-swap", () => {
+    document.documentElement.toggleAttribute("data-lit", lit);
+  });
+</script>

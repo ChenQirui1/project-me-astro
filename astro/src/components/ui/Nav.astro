@@ -27,7 +27,7 @@ const links = [
 ---
 
 {/* Narrow: a tab strip that gets out of the way. The active tab inverts to
-    paper and carries the hazard-yellow marker — no lifting, no easing. Once
+    paper, which is marker enough at this size — no lifting, no easing. Once
     the page is scrolled the strip closes onto a chevron (see the script
     below); the chevron, or scrolling back to the top, opens it again. The
     chevron sits inside the same box as the strip and is positioned over it,
@@ -54,10 +54,6 @@ const links = [
             ]}
           >
             <span>{link.name}</span>
-            <span
-              class:list={["mt-2 h-[2px] w-6", isActive ? "bg-warning" : "bg-transparent"]}
-              aria-hidden="true"
-            />
           </a>
         );
       })

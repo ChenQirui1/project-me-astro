@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { storageToMarkdown, firstParagraphText } from "./confluence-storage.mjs";
+import {
+  storageToMarkdown,
+  firstParagraphText,
+  summarize,
+} from "./confluence-storage.mjs";
 
 const options = {
   attachmentUrl: (filename) => `/img/confluence/12345/${filename}`,
@@ -51,9 +55,21 @@ test("external images pass through untouched", () => {
   assert.equal(md, "![](https://example.com/a.png)");
 });
 
-test("info panel becomes a blockquote", () => {
+test("an info panel is dropped with its contents", () => {
+  // It is how the metadata block at the top of a page is written, and the
+  // sync reads those facts into the frontmatter instead.
   const md = convert(
     `<ac:structured-macro ac:name="info">` +
+      `<ac:rich-text-body><p>Year: 2026</p></ac:rich-text-body>` +
+      `</ac:structured-macro><p>Body.</p>`,
+  );
+  assert.doesNotMatch(md, /Year: 2026/);
+  assert.match(md, /Body\./);
+});
+
+test("note, tip and warning panels still become blockquotes", () => {
+  const md = convert(
+    `<ac:structured-macro ac:name="note">` +
       `<ac:rich-text-body><p>Heads up.</p></ac:rich-text-body>` +
       `</ac:structured-macro>`,
   );
@@ -81,15 +97,29 @@ test("expand macro survives as the stylesheet's accordion", () => {
 test("expand macro title decodes entities before escaping", () => {
   const md = convert(
     `<ac:structured-macro ac:name="expand">` +
-      `<ac:parameter ac:name="title">Editorial TODO &mdash; not public</ac:parameter>` +
+      `<ac:parameter ac:name="title">Credits &mdash; and rights</ac:parameter>` +
       `<ac:rich-text-body><p>Body.</p></ac:rich-text-body>` +
       `</ac:structured-macro>`,
   );
   // Confluence hands the parameter back as raw storage text, so escaping it
   // without decoding first renders `&amp;mdash;` as literal text in the
   // summary rather than the dash the author typed.
-  assert.match(md, /<summary class="accordion-summary">Editorial TODO — not public<\/summary>/);
+  assert.match(md, /<summary class="accordion-summary">Credits — and rights<\/summary>/);
   assert.doesNotMatch(md, /&amp;mdash;/);
+});
+
+test("an Editorial TODO block never reaches the page", () => {
+  // Open questions for the author, written in Confluence on purpose. The
+  // title is the convention, so the match is on its opening words.
+  const md = convert(
+    `<ac:structured-macro ac:name="expand">` +
+      `<ac:parameter ac:name="title">Editorial TODO &mdash; not for the public page</ac:parameter>` +
+      `<ac:rich-text-body><p>Chase the licence.</p></ac:rich-text-body>` +
+      `</ac:structured-macro><p>Body.</p>`,
+  );
+  assert.doesNotMatch(md, /Editorial TODO/);
+  assert.doesNotMatch(md, /Chase the licence/);
+  assert.match(md, /Body\./);
 });
 
 test("expand macro without a title still collapses", () => {
@@ -156,6 +186,88 @@ test("no stray ac:/ri: markup survives a mixed document", () => {
   );
   assert.doesNotMatch(md, /ac:|ri:/);
   assert.match(md, /# Title/);
+});
+
+// --- Two-column layouts ---------------------------------------------------
+
+const cell = (inner) => `<ac:layout-cell>${inner}</ac:layout-cell>`;
+const section = (type, ...cells) =>
+  `<ac:layout-section ac:type="${type}" ac:breakout-mode="wide">` +
+  cells.map(cell).join("") +
+  `</ac:layout-section>`;
+const twoEqual = (...cells) => section("two_equal", ...cells);
+
+test("a two-column section keeps its columns", () => {
+  const md = convert(twoEqual(img("left.png"), img("right.png")));
+  assert.match(md, /<div class="columns"/);
+  assert.equal((md.match(/<div class="column">/g) ?? []).length, 2);
+  assert.match(md, /left\.png/);
+  assert.match(md, /right\.png/);
+});
+
+test("a single-column section still leaves no scaffolding behind", () => {
+  const md = convert(
+    `<ac:layout-section ac:type="single">` +
+      `<ac:layout-cell><p>Just prose.</p></ac:layout-cell>` +
+      `</ac:layout-section>`,
+  );
+  assert.equal(md, "Just prose.");
+});
+
+test("a three-column section keeps all three", () => {
+  const md = convert(
+    section("three_equal", img("a.png"), img("b.png"), img("c.png")),
+  );
+  assert.match(md, /--cols:3/);
+  assert.equal((md.match(/<div class="column">/g) ?? []).length, 3);
+  // One visual per cell is a comparison, however many cells there are.
+  assert.doesNotMatch(md, /<div class="carousel"/);
+});
+
+test("a two-column section says so on the element", () => {
+  const md = convert(twoEqual(img("a.png"), img("b.png")));
+  assert.match(md, /--cols:2/);
+});
+
+test("more visuals than cells are variations, so they collapse", () => {
+  // Four shots of the same panel in four themes: a carousel, not a grid.
+  const md = convert(
+    twoEqual(img("a.png") + img("b.png"), img("c.png") + img("d.png")),
+  );
+  assert.match(md, /<div class="carousel"/);
+  assert.doesNotMatch(md, /<div class="columns"/);
+  assert.equal((md.match(/<figure class="carousel-slide">/g) ?? []).length, 4);
+});
+
+test("the collapsed set takes the heading above it as its title", () => {
+  const md = convert(
+    `<h2>Colour schemes</h2>` +
+      twoEqual(img("a.png") + img("b.png"), img("c.png") + img("d.png")),
+  );
+  assert.match(md, /data-title="Colour schemes"/);
+});
+
+test("columns holding prose beside a visual stay columns", () => {
+  // Not a set of variations — the author put an argument beside its evidence.
+  const md = convert(
+    twoEqual(`<p>Three states.</p>`, img("a.png") + img("b.png") + img("c.png")),
+  );
+  assert.match(md, /<div class="columns"/);
+  assert.doesNotMatch(md, /<div class="carousel"/);
+});
+
+test("captions survive into a column", () => {
+  const md = convert(
+    twoEqual(
+      `<ac:image ac:alt="Easy Read"><ri:attachment ri:filename="easy.png" />` +
+        `<ac:caption><p><strong>Easy Read</strong>, in plain words</p></ac:caption>` +
+        `</ac:image>`,
+      img("checklist.png"),
+    ),
+  );
+  assert.match(md, /<div class="columns"/);
+  assert.match(md, /<figure class="media">/);
+  assert.match(md, /in plain words/);
 });
 
 // --- Carousels -----------------------------------------------------------
@@ -545,6 +657,47 @@ test("onCarousel reports each carousel's slides in document order", () => {
 test("a quote in a heading cannot break out of the title attribute", () => {
   const md = convert(`<h3>The "good" set</h3>${img("a.png")}${img("b.png")}`);
   assert.match(md, /data-title="The &quot;good&quot; set"/);
+});
+
+test("summarize leaves a short description alone", () => {
+  assert.equal(summarize("Short enough."), "Short enough.");
+});
+
+test("summarize stops on the last sentence that fits", () => {
+  // The PSA page: a blunt character cut landed on "how similar cases were ".
+  const text =
+    "Faults reach a port control room by phone, message and email. For each " +
+    "one a case officer has to work out what went wrong, then fix it or " +
+    "escalate it to the right department. That needs two things at once: " +
+    "precedent, how similar cases were handled, and the current state of the " +
+    "equipment.";
+  const out = summarize(text);
+  assert.ok(out.length <= 240);
+  assert.match(out, /right department\.$/);
+  assert.doesNotMatch(out, /similar cases were $/);
+});
+
+test("summarize cuts a long first sentence on a word boundary", () => {
+  const text = `${"word ".repeat(80)}end.`;
+  const out = summarize(text);
+  assert.ok(out.length <= 241, `${out.length} chars`);
+  assert.match(out, /word\u2026$/);
+});
+
+test("summarize keeps a decimal point from ending the sentence", () => {
+  const text = `The figure was 3.5 per cent. Filler ${"filler ".repeat(40)}done.`;
+  assert.match(summarize(text), /3\.5 per cent\.$/);
+});
+
+test("summarize does not break on an abbreviation", () => {
+  // The ClearWeb page: a cut on "i.e." left the lede hanging on a bracket.
+  const text =
+    "Government pages are written well. The people who most need them " +
+    "(i.e. readers with a cognitive load) are the ones they serve worst. " +
+    `${"filler ".repeat(30)}done.`;
+  const out = summarize(text);
+  assert.doesNotMatch(out, /\(i\.e\.$/);
+  assert.match(out, /written well\.$|serve worst\.$/);
 });
 
 test("firstParagraphText decodes typographic entities", () => {

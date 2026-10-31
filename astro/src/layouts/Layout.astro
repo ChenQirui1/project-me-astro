@@ -4,12 +4,20 @@ import "../styles/tailwind.css";
 import Header from "../components/ui/Header.astro";
 import Nav from "../components/ui/Nav.astro";
 import ScrollPager from "../components/ScrollPager.astro";
+import PageTransition from "../components/PageTransition.astro";
+import Meta from "../components/Meta.astro";
 
 interface Props {
   title?: string;
+  /** Overrides the site description in search results and link previews. */
+  description?: string;
+  /** Site-relative preview image; defaults to the site card. */
+  image?: string;
+  imageAlt?: string;
+  type?: "website" | "article";
 }
 
-const { title } = Astro.props;
+const { title, description, image, imageAlt, type } = Astro.props;
 const pageTitle = title ? `${title} / IVAN.C` : "IVAN.C";
 ---
 
@@ -17,9 +25,23 @@ const pageTitle = title ? `${title} / IVAN.C` : "IVAN.C";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* The tab icon, in the order browsers pick from: .ico for the ones
+        that only take that, the SVG for everything current, then the sizes
+        iOS and Android use when the site is saved to a home screen. */}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#111111" />
     <meta name="generator" content={Astro.generator} />
     <title>{pageTitle}</title>
+    <Meta
+      title={pageTitle}
+      description={description}
+      image={image}
+      imageAlt={imageAlt}
+      type={type}
+    />
     <ClientRouter />
   </head>
   <!-- The page is ink; every region below is a paper panel and the 4px gap
@@ -28,14 +50,20 @@ const pageTitle = title ? `${title} / IVAN.C` : "IVAN.C";
     <Header />
     <div class="flex flex-1 flex-col gap-gutter overflow-hidden lg:flex-row">
       <Nav activePath={Astro.url.pathname} />
+      {/* A page change is a swap — `animate="none"` — with one exception:
+          arriving from the landing page, the interior lights up instead of
+          switching on. The name is what lets style.css reach this element's
+          half of the transition and animate only that case. */}
       <main
         id="container"
         class="panel @container/main flex-1 overflow-y-auto"
+        transition:name="interior"
         transition:animate="none"
       >
         <slot />
       </main>
     </div>
     <ScrollPager />
+    <PageTransition />
   </body>
 </html>

@@ -1,0 +1,126 @@
+---
+// Click any visual in a project page to see it on its own.
+//
+// Script only, like Carousel.astro: the images come from the Markdown, so
+// there is no per-instance component to render. The dialog is built once on
+// first use and reused, and it is a real <dialog> opened with showModal(), so
+// the focus trap, the Escape key and the backdrop come from the platform
+// rather than being reimplemented here.
+//
+// The image is never scaled past its own size (see `.lightbox-image` in
+// style.css). Several of the Confluence attachments are 400-odd pixels wide,
+// and blowing one up to fill a screen adds no detail — only blur. So this
+// expands what there is to expand and stops there.
+---
+
+<script>
+  /** What opens: visuals in the page copy, and the hero at the top. */
+  const SELECTOR = ".copy img, [data-lightbox] img";
+
+  let dialog: HTMLDialogElement | null = null;
+  let image: HTMLImageElement | null = null;
+  let bar: HTMLElement | null = null;
+  let note: HTMLElement | null = null;
+  // Where focus was before opening, to put it back on close.
+  let opener: HTMLElement | null = null;
+
+  function build() {
+    if (dialog) return dialog;
+
+    dialog = document.createElement("dialog");
+    dialog.className = "lightbox";
+
+    const frame = document.createElement("figure");
+    frame.className = "lightbox-frame";
+
+    bar = document.createElement("div");
+    bar.className = "bar lightbox-bar";
+
+    note = document.createElement("figcaption");
+    note.className = "label lightbox-note";
+    bar.append(note);
+
+    // Its own strip above the picture, not the caption bar below it: that bar
+    // is gone whenever there is no caption, and the close has to be there
+    // either way.
+    const head = document.createElement("div");
+    head.className = "bar lightbox-head";
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "lightbox-close";
+    close.setAttribute("aria-label", "Close");
+    close.textContent = "×";
+    close.addEventListener("click", () => dialog?.close());
+    head.append(close);
+
+    image = document.createElement("img");
+    image.className = "lightbox-image";
+
+    frame.append(head, image, bar);
+    dialog.append(frame);
+
+    // The backdrop is the dialog itself: a click that lands on it rather than
+    // on the frame inside is a click outside the picture.
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    // Release the source and hand focus back, however it was closed —
+    // the button, the backdrop or Escape.
+    dialog.addEventListener("close", () => {
+      if (image) image.src = "";
+      opener?.focus();
+      opener = null;
+    });
+
+    document.body.append(dialog);
+    return dialog;
+  }
+
+  function open(source: HTMLImageElement) {
+    const box = build();
+    if (!image || !note || !bar) return;
+
+    image.src = source.currentSrc || source.src;
+    image.alt = source.alt;
+
+    // Only a caption the visual already carries on the page. `alt` is not a
+    // fallback: on a synced page it holds the Confluence attachment's
+    // filename — "image-20261029-121918.png" — which tells a reader nothing
+    // and is not what the picture is called. No caption, no bar.
+    const carried = source
+      .closest("figure")
+      ?.querySelector("figcaption")?.textContent?.trim();
+    note.textContent = carried ?? "";
+    bar.hidden = !note.textContent;
+
+    opener = source;
+    box.showModal();
+  }
+
+  function bind(source: HTMLImageElement) {
+    if (source.dataset.lightbox === "on") return;
+    // An image that is already a link does something else when clicked.
+    if (source.closest("a")) return;
+    source.dataset.lightbox = "on";
+
+    // A button in all but name: the platform's own roles, so the keyboard
+    // reaches it the way it reaches anything else clickable.
+    source.setAttribute("role", "button");
+    source.tabIndex = 0;
+    source.setAttribute("aria-label", `Expand image: ${source.alt || "untitled"}`);
+
+    source.addEventListener("click", () => open(source));
+    source.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      open(source);
+    });
+  }
+
+  // Fires on first load and after every view transition.
+  document.addEventListener("astro:page-load", () => {
+    document.querySelectorAll<HTMLImageElement>(SELECTOR).forEach(bind);
+  });
+</script>

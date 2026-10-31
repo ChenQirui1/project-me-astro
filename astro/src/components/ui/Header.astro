@@ -1,8 +1,9 @@
 ---
 // Same masthead as before — wordmark home link, one call to action. The
-// nameplate is stamped (ink plate, paper type); the space between them is the
-// sheet's 4px drafting grid rather than empty white. GitHub and LinkedIn sit as
-// icon cells at the end of that grid, just before the call to action.
+// wordmark is set in ink on the panel's own paper rather than stamped on a
+// plate: the plate read as a second nameplate beside the one on the landing
+// page. GitHub and LinkedIn sit as icon cells at the end of the drafting
+// grid, just before the call to action.
 import { getEntry } from "astro:content";
 
 const resume = await getEntry("cv", "resume");
@@ -26,7 +27,7 @@ const icons = [
 
 <header class="panel flex items-stretch">
   <a href="/" class="flex items-center border-r border-ink px-3 py-1">
-    <span class="h3 bg-ink px-2 py-0.5 text-paper-pure">ivan.c</span>
+    <span class="h3 text-ink">ivan.c</span>
   </a>
 
   <div class="grid-lines hidden flex-1 sm:block"></div>

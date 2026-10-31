@@ -4,15 +4,15 @@
     "email": "ivanchen.code@gmail.com",
     "phone": "(+65) 8866 8119",
     "socials": {
-      "linkedin": "https://linkedin.com/in/yourprofile",
-      "instagram": "https://instagram.com/yourhandle",
-      "github": "https://github.com/yourusername"
+      "linkedin": "https://sg.linkedin.com/in/ivan-chen-8080b7259",
+      "instagram": "https://instagram.com/cqirui_",
+      "github": "https://github.com/ChenQirui1"
     }
   },
   "about": {
-    "headline": "Interaction Design Student focusing on human-centered AI systems",
-    "bio": "My journey began with a strong interest in computer vision and AI. While working with data and AI systems, I recognized the critical importance of addressing how we interact with these technologies. This realization led to a change of heart—I shifted my focus to designing AI systems through a human-centered lens, ensuring that technology serves people in meaningful and intuitive ways.",
-    "philosophy": "With experience working as a developer, I understand how systems are designed and built. I believe the best solutions emerge when user needs are thoughtfully balanced with system requirements. By understanding these trade-offs, I can deliver software that works well for users while remaining simpler to develop. My focus lies in creating products with exceptional usability and technical simplicity, then iterating with clever designs and thoughtful refinements.",
+    "headline": "Interaction Design Student focusing on human-centred AI systems",
+    "bio": "My interest lies in computer vision and AI. While working with data and AI systems, I recognised the critical importance of addressing how we interact with these technologies. This realisation led towards shifting my focus to designing AI systems through a human-centred lens, ensuring that technology serves people in meaningful and intuitive ways.",
+    "philosophy": "With experience working as a developer, I gained understanding of how systems are designed and built. I believe the best solutions emerge when user needs are thoughtfully balanced with system requirements. Ultimately, I aim to create products with exceptional usability and technical simplicity, then iterating with clever designs and thoughtful refinements.",
     "availability": "Currently open to internships, research positions, and collaborative opportunities in interaction design and human-AI systems."
   },
   "education": [

@@ -1,0 +1,61 @@
+---
+// Everything a link preview and a search result read.
+//
+// Without these a pasted link unfurls as a bare URL: no title, no blurb, no
+// image. Facebook, LinkedIn, Slack, iMessage and WhatsApp all read the og:*
+// tags; X reads twitter:*; search engines read description and canonical.
+//
+// Every URL here is absolute, because a crawler resolves nothing: a relative
+// og:image is simply dropped. `Astro.site` is the origin from astro.config.mjs.
+import {
+  SITE_NAME,
+  SITE_DESCRIPTION,
+  OG_IMAGE,
+  OG_IMAGE_ALT,
+} from "../lib/site";
+
+interface Props {
+  /** The full <title>, reused as the preview's headline. */
+  title: string;
+  description?: string;
+  /** Site-relative path to the preview image. Defaults to the site card. */
+  image?: string;
+  imageAlt?: string;
+  type?: "website" | "article";
+}
+
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  image = OG_IMAGE,
+  imageAlt = OG_IMAGE_ALT,
+  type = "website",
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const preview = new URL(image, Astro.site);
+
+// Only for the card we drew ourselves, whose size we know. Declaring it lets
+// LinkedIn lay the preview out before it has fetched the file; guessing for a
+// project's own hero would be worse than saying nothing.
+const known = image === OG_IMAGE;
+---
+
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:url" content={canonical} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={preview} />
+{known && <meta property="og:image:width" content="1200" />}
+{known && <meta property="og:image:height" content="630" />}
+<meta property="og:image:alt" content={imageAlt} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={preview} />
+<meta name="twitter:image:alt" content={imageAlt} />

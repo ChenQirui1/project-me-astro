@@ -2,6 +2,8 @@
 import { ClientRouter } from "astro:transitions";
 import "../styles/tailwind.css";
 import ScrollPager from "../components/ScrollPager.astro";
+import PageTransition from "../components/PageTransition.astro";
+import Meta from "../components/Meta.astro";
 ---
 
 <!doctype html>
@@ -9,15 +11,24 @@ import ScrollPager from "../components/ScrollPager.astro";
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* The tab icon, in the order browsers pick from: .ico for the ones
+        that only take that, the SVG for everything current, then the sizes
+        iOS and Android use when the site is saved to a home screen. */}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#111111" />
     <meta name="generator" content={Astro.generator} />
     <title>IVAN.C</title>
+    <Meta title="IVAN.C — Product Engineer" />
     <ClientRouter />
   </head>
   <body class="min-h-screen bg-ink">
-    <div id="container" transition:animate="none">
+    <div id="container" transition:name="landing" transition:animate="none">
       <slot />
     </div>
     <ScrollPager />
+    <PageTransition />
   </body>
 </html>

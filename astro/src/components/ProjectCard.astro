@@ -16,7 +16,7 @@ const { title, image, description, featured = false } = Astro.props;
   <div
     class="bar justify-between border-b border-ink transition-[background-color,color] duration-[80ms] ease-linear group-hover:bg-warning group-hover:text-ink"
   >
-    <span class="label truncate">{title}</span>
+    <span class="label min-w-0 text-body-lg">{title}</span>
     {
       featured && (
         <span class="micro shrink-0 bg-warning px-1 py-[2px] text-ink group-hover:bg-ink group-hover:text-warning">
@@ -27,7 +27,10 @@ const { title, image, description, featured = false } = Astro.props;
   </div>
 
   {/* Image well: the hero runs edge to edge, between the header bar and the
-      description, with the card's own hairlines as its frame. */}
+      description, with the card's own hairlines as its frame. A fixed band,
+      cropped: the cards in a row then share one height, and a hero that is
+      the wrong shape for it is a hero to re-crop rather than a reason to let
+      the grid go ragged. */}
   <div class="border-b border-ink">
     {
       image ? (

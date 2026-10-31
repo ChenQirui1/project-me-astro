@@ -15,7 +15,10 @@ const elsewhere = [
 ].filter((link): link is { label: string; href: string } => Boolean(link.href));
 ---
 
-<Layout title="contact">
+<Layout
+  title="contact"
+  description="Get in touch with Ivan Chen about product engineering work, collaborations and opportunities."
+>
   {/* Same reading column as the about and project pages. On wider screens
       the form takes the main track and the other channels sit beside it. */}
   <article class="mx-auto grid w-full max-w-[820px] grid-cols-1 items-start gap-8 p-4 sm:p-8 md:grid-cols-[minmax(0,1fr)_16rem]">
@@ -27,17 +30,21 @@ const elsewhere = [
 
     <div>
       <div id="contact-form-wrapper">
-        <form id="contact-form" class="flex flex-col gap-7" novalidate>
+        <form
+          id="contact-form"
+          class="flex flex-col gap-7"
+          data-mailto={email}
+          novalidate
+        >
           {/* Name Field */}
           <div class="relative pt-2">
-            <label for="name" class="label absolute left-2 top-0 z-10 bg-ink px-1 py-[2px] text-paper-pure">
+            <label for="name" class="label field-label">
               NAME
             </label>
             <input
               type="text"
               id="name"
               name="name"
-              placeholder="who is writing"
               class="field mt-1"
             />
             <span id="name-error" class="data mt-1 hidden text-danger">
@@ -47,14 +54,13 @@ const elsewhere = [
 
           {/* Email Field */}
           <div class="relative pt-2">
-            <label for="email" class="label absolute left-2 top-0 z-10 bg-ink px-1 py-[2px] text-paper-pure">
+            <label for="email" class="label field-label">
               EMAIL
             </label>
             <input
               type="email"
               id="email"
               name="email"
-              placeholder="where to reply"
               class="field mt-1"
             />
             <span id="email-error" class="data mt-1 hidden text-danger">
@@ -64,7 +70,7 @@ const elsewhere = [
 
           {/* Inquiry Field */}
           <div class="relative pt-2">
-            <label for="inquiry" class="label absolute left-2 top-0 z-10 bg-ink px-1 py-[2px] text-paper-pure">
+            <label for="inquiry" class="label field-label">
               INQUIRY
             </label>
             <textarea
@@ -173,7 +179,10 @@ const elsewhere = [
       const body = encodeURIComponent(
         `Name: ${name}\nEmail: ${email}\n\nMessage:\n${inquiry}`,
       );
-      window.location.href = `mailto:ivanchen.code@gmail.com?subject=${subject}&body=${body}`;
+      const to = form!.dataset.mailto;
+      if (to) {
+        window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+      }
 
       if (sentName) sentName.textContent = name.split(" ")[0];
       wrapper?.classList.add("hidden");

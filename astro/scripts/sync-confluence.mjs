@@ -39,6 +39,7 @@ import {
   storageToMarkdown,
   firstParagraphText,
   isPlayable,
+  summarize,
 } from "./confluence-storage.mjs";
 import {
   extractMetadata,
@@ -353,7 +354,7 @@ async function writeProject(prepared, titleToSlug) {
     .filter((url) => !inCarousels.has(url));
 
   const ancestry = readAncestry(page, rootId);
-  const description = meta.summary ?? firstParagraphText(storage).slice(0, 240);
+  const description = meta.summary ?? summarize(firstParagraphText(storage));
   const year = meta.year ?? new Date(page.history?.createdDate ?? Date.now()).getFullYear();
 
   // `medium` drives the existing tag strip on the project page.

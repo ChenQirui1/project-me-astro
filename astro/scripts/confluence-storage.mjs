@@ -38,7 +38,8 @@ turndown.keep(
     node.nodeName === "VIDEO" ||
     node.nodeName === "FIGURE" ||
     node.nodeName === "DETAILS" ||
-    (node.nodeName === "DIV" && node.getAttribute("class") === "carousel"),
+    (node.nodeName === "DIV" &&
+      ["carousel", "columns"].includes(node.getAttribute("class"))),
 );
 
 const escapeHtml = (text) =>
@@ -177,11 +178,28 @@ const MACRO = /<ac:structured-macro\s+([^>]*?)>([\s\S]*?)<\/ac:structured-macro>
 const SELF_CLOSING_MACRO = /<ac:structured-macro\s+[^>]*?\/>/g;
 
 const PANEL_LABELS = {
-  info: "ℹ️ ",
   note: "📝 ",
   tip: "💡 ",
   warning: "⚠️ ",
 };
+
+/**
+ * Macros dropped with their contents rather than lowered.
+ *
+ * The metadata block at the top of a project page is written as an `info`
+ * panel, and the sync reads those facts into the frontmatter, where the
+ * catalogue record at the foot of the page renders them properly. Lowering
+ * the panel as well publishes the same list twice, the second time as a
+ * bulleted quote above the record that already carries it.
+ */
+const DROPPED_MACROS = new Set(["info"]);
+
+/**
+ * Expand blocks that are notes to the author rather than content. The drafts
+ * carry a trailing `Editorial TODO` block of open questions, which is written
+ * in Confluence on purpose and has no business on the public page.
+ */
+const PRIVATE_EXPAND = /^\s*editorial todo\b/i;
 
 /**
  * Lowers Confluence macros/images/links into ordinary HTML.
@@ -219,6 +237,8 @@ export function lowerStorageToHtml(storage, { attachmentUrl, pageLink }) {
   html = html.replace(MACRO, (full, attrs, body) => {
     const name = /ac:name="([^"]+)"/.exec(attrs)?.[1];
 
+    if (DROPPED_MACROS.has(name)) return "";
+
     if (name === "code") {
       const params = macroParams(body);
       const code = stripCdata(
@@ -244,6 +264,7 @@ export function lowerStorageToHtml(storage, { attachmentUrl, pageLink }) {
       // decoding first turns that into `&amp;mdash;` and the summary renders
       // the entity as literal text.
       const title = decodeEntities(params.title ?? "Details");
+      if (PRIVATE_EXPAND.test(title)) return "";
       // The classes are the stylesheet's own accordion (see `.accordion-item`
       // in src/styles/style.css), which draws the rule, the hazard-yellow
       // hover and the +/− mark from the element's open state. Without them a
@@ -280,7 +301,49 @@ export function lowerStorageToHtml(storage, { attachmentUrl, pageLink }) {
     },
   );
 
-  // Layout scaffolding contributes nothing to a single-column article.
+  // A multi-column section is the one piece of layout scaffolding that
+  // carries meaning: the author put these things beside each other
+  // deliberately, two or three across. What sits in the cells decides how it
+  // comes across, and the test is whether the visuals outnumber them.
+  //
+  //   one visual per cell   a comparison — the thing the columns were
+  //                         reached for. They stay columns.
+  //   several per cell      variations of one thing, stacked inside the
+  //                         cells for want of anywhere else: four shots of
+  //                         the same panel in four themes. A grid of those
+  //                         reads worse than a carousel, so the set collapses
+  //                         and the columns go with it.
+  //
+  // Sidebar layouts are treated as equal columns. Confluence's own ratio is
+  // not carried across, since the reading column here is far narrower than
+  // the page it was set on.
+  const source = html;
+  html = html.replace(
+    /<ac:layout-section\b[^>]*>([\s\S]*?)<\/ac:layout-section>/g,
+    (_full, inner, offset) => {
+      const cells = [
+        ...inner.matchAll(/<ac:layout-cell\b[^>]*>([\s\S]*?)<\/ac:layout-cell>/g),
+      ].map((cell) => cell[1]);
+      // A single cell is an ordinary stretch of page; its scaffolding goes.
+      if (cells.length < 2) return inner;
+
+      const body = cells.join("");
+      const visuals = [...body.matchAll(MEDIA)].map((visual) => visual[0]);
+      if (visuals.length > cells.length && isMediaRun(body)) {
+        // The heading the set sits under is its title, the same one the
+        // marked and image-only forms would have taken.
+        const above = [...source.slice(0, offset).matchAll(HEADING)].at(-1);
+        return carousel(visuals, plainText(above?.[2] ?? ""));
+      }
+
+      const columns = cells
+        .map((cell) => `<div class="column">${cell}</div>`)
+        .join("");
+      return `<div class="columns" style="--cols:${cells.length}">${columns}</div>`;
+    },
+  );
+
+  // The rest contributes nothing to a single-column article.
   html = html
     .replace(/<\/?ac:layout(?:-section|-cell)?\b[^>]*>/g, "")
     .replace(/<ac:task-list\b[^>]*>([\s\S]*?)<\/ac:task-list>/g, "$1")
@@ -688,6 +751,35 @@ export function storageToMarkdown(storage, options) {
     .turndown(collapseCarousels(html, options))
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+/**
+ * Trims a description to something a card can hold without cutting a word in
+ * half.
+ *
+ * Whole sentences are preferred: the same string is read as the lede at the
+ * top of the project page, and a lede that stops mid-clause — "precedent, how
+ * similar cases were " — reads as a fault rather than a summary. A single
+ * sentence longer than the budget has nowhere to break, so it is cut at a word
+ * boundary and marked.
+ */
+export function summarize(text, limit = 240) {
+  const clean = text.trim();
+  if (clean.length <= limit) return clean;
+
+  // Sentence ends inside the budget; the last one is the most that fits. A
+  // full stop only ends a sentence when what follows starts one, which keeps
+  // the decimal in "3.5" out of it; and a stop two characters after another
+  // is the tail of an abbreviation — "i.e.", "e.g.", "a.m." — not an end.
+  const ends = [...clean.matchAll(/[.!?](?=$|\s+["'“‘(]?[A-Z0-9])/g)]
+    .filter((match) => clean[match.index - 2] !== ".")
+    .map((match) => match.index + 1)
+    .filter((end) => end <= limit);
+  if (ends.length > 0) return clean.slice(0, ends.at(-1)).trim();
+
+  const cut = clean.slice(0, limit);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > 0 ? cut.slice(0, space) : cut).trim()}…`;
 }
 
 /** Plain text of the first real paragraph, for the description frontmatter. */

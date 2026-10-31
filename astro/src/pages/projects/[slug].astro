@@ -33,6 +33,16 @@ const kind =
 const projects = (await getCollection("projects")).sort(
   (a, b) => (a.data.order ?? 0) - (b.data.order ?? 0),
 );
+// The hero is the thumbnail shown large at the top of the page. The sync
+// lifts it out of the body when it stood alone there, but an image that is
+// part of a composition — a column of a comparison, a captioned figure —
+// has to stay where the author put it. In that case the body is already
+// showing it, so the page withholds the hero rather than printing it twice.
+const heroInBody = project.data.thumbnail
+  ? project.body?.includes(project.data.thumbnail) === true
+  : false;
+const hero = heroInBody ? undefined : project.data.thumbnail;
+
 const currentIndex = projects.findIndex((p) => p.id === project.id);
 const prevId = projects[(currentIndex - 1 + projects.length) % projects.length].id;
 const nextId = projects[(currentIndex + 1) % projects.length].id;
@@ -86,10 +96,10 @@ const nextId = projects[(currentIndex + 1) % projects.length].id;
         A dashed skeleton holds the slot when the project has no hero yet. */}
     <div class="@container mb-8">
       {
-        project.data.thumbnail ? (
+        hero ? (
           <div class="flex justify-center border border-ink bg-paper" data-lightbox>
             <img
-              src={asset(project.data.thumbnail)}
+              src={asset(hero)}
               alt={project.data.title}
               class="block max-h-[56.25cqw] w-auto max-w-full"
             />

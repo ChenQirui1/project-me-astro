@@ -310,13 +310,25 @@ async function writeProject(prepared, titleToSlug) {
     },
   });
 
+  // A line that is nothing but one image. These are the only ones the hero
+  // may take: an image inside a columns block, a carousel or a captioned
+  // figure is part of a composition the author built in Confluence, and
+  // lifting it out would leave a two-column comparison or an uncaptioned gap.
+  const STANDALONE_IMAGE = /^!\[[^\]]*\]\(([^)]+)\)[ \t]*$/gm;
+  const standalone = new Map();
+  for (const match of markdown.matchAll(STANDALONE_IMAGE)) {
+    const filename = decodeURIComponent(match[1].split("/").pop());
+    if (!standalone.has(filename)) standalone.set(filename, match[0]);
+  }
+
   // Hero media may be named in the metadata block; otherwise take the first
-  // image the page actually renders. A clip is never the hero — `thumbnail`
-  // is rendered as an `<img>` by both the catalogue card and the page header,
-  // so a page carrying only clips gets no hero rather than a broken one, and
-  // falls back to the skeleton those two already draw.
+  // image the page actually renders, preferring one that stands alone so it
+  // can be lifted rather than repeated. A clip is never the hero —
+  // `thumbnail` is rendered as an `<img>` by both the catalogue card and the
+  // page header, so a page carrying only clips gets no hero rather than a
+  // broken one, and falls back to the skeleton those two already draw.
   const stills = [...usedAttachments].filter((filename) => !isPlayable(filename));
-  let heroName = stills[0];
+  let heroName = stills.find((filename) => standalone.has(filename)) ?? stills[0];
   if (meta.heroMedia && attachments.has(meta.heroMedia)) {
     if (isPlayable(meta.heroMedia)) {
       console.warn(
@@ -327,6 +339,19 @@ async function writeProject(prepared, titleToSlug) {
     }
   }
   if (heroName) usedAttachments.add(heroName);
+
+  // The hero is that image shown at the top of the page, not a second copy of
+  // it. Where it stood alone in the body, drop it there; where it is part of
+  // a composition it has to stay, and the page withholds its hero instead
+  // (see src/pages/projects/[slug].astro) so it still appears exactly once.
+  let body = markdown;
+  if (heroName && standalone.has(heroName)) {
+    body = body.replace(standalone.get(heroName), "").replace(/\n{3,}/g, "\n\n");
+  } else if (heroName && markdown.includes(`/${pageId}/${heroName}`)) {
+    console.warn(
+      `    ~ hero "${heroName}" sits inside a composition — the page will show it there, not as a hero`,
+    );
+  }
 
   const localDir = path.join(ASSETS_DIR, pageId);
   let downloaded = 0;
@@ -398,7 +423,7 @@ async function writeProject(prepared, titleToSlug) {
     .filter((line) => line !== null)
     .join("\n");
 
-  const contents = `${frontmatter}\n${markdown}\n`;
+  const contents = `${frontmatter}\n${body.trim()}\n`;
   const unchanged =
     fs.existsSync(file) && fs.readFileSync(file, "utf8") === contents;
 

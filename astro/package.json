@@ -12,7 +12,7 @@
     "assets:push": "node scripts/assets.mjs push",
     "assets:pull": "node scripts/assets.mjs pull",
     "sync:confluence": "node scripts/sync-confluence.mjs",
-    "deploy": "astro build && wrangler deploy",
+    "deploy": "pnpm build:ci && wrangler deploy",
     "build:ci": "pnpm sync:confluence && pnpm assets:push && pnpm build"
   },
   "dependencies": {

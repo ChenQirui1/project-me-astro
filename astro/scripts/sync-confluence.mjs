@@ -380,6 +380,23 @@ async function writeProject(prepared, titleToSlug) {
 
   const ancestry = readAncestry(page, rootId);
   const description = meta.summary ?? summarize(firstParagraphText(storage));
+
+  // The project page renders `description` as its lede, set in a quote block.
+  // A Confluence page that opens with that same sentence as a blockquote —
+  // the author's own lede, written in the page — would then show it twice, as
+  // two identical quotes. Drop the body's copy and keep the frontmatter's.
+  //
+  // Matched on bare text: the Markdown carries emphasis marks and escapes
+  // that the frontmatter does not, so the two are never equal character for
+  // character even when they are plainly the same sentence.
+  const bare = (text) =>
+    text
+      .replace(/[*_`\\]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  body = body.replace(/^\s*((?:>[^\n]*\n?)+)/, (quote, lines) =>
+    bare(lines.replace(/^>[ \t]?/gm, "")) === bare(description) ? "" : quote,
+  );
   const year = meta.year ?? new Date(page.history?.createdDate ?? Date.now()).getFullYear();
 
   // `medium` drives the existing tag strip on the project page.

@@ -4,6 +4,7 @@ import "../styles/tailwind.css";
 import ScrollPager from "../components/ScrollPager.astro";
 import PageTransition from "../components/PageTransition.astro";
 import Meta from "../components/Meta.astro";
+import Footer from "../components/ui/Footer.astro";
 ---
 
 <!doctype html>
@@ -13,8 +14,14 @@ import Meta from "../components/Meta.astro";
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     {/* The tab icon, in the order browsers pick from: .ico for the ones
         that only take that, the SVG for everything current, then the sizes
-        iOS and Android use when the site is saved to a home screen. */}
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+        iOS and Android use when the site is saved to a home screen.
+
+        The .ico holds all three squares listed here, and they are listed
+        because `sizes` is what a crawler reads instead of opening the file.
+        Google wants a 48px square and will pass over an icon that claims to
+        be 32 — which is how the site came to be shown in search results
+        under a generic framework mark rather than its own. */}
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
@@ -24,9 +31,20 @@ import Meta from "../components/Meta.astro";
     <Meta title="IVAN.C — Product Engineer" />
     <ClientRouter />
   </head>
-  <body class="min-h-screen bg-ink">
-    <div id="container" transition:name="landing" transition:animate="none">
+  <body class="flex min-h-screen flex-col bg-ink">
+    <div
+      id="container"
+      class="flex flex-1 flex-col"
+      transition:name="landing"
+      transition:animate="none"
+    >
       <slot />
+    </div>
+    {/* Outside #container, so it is not part of the landing's transition —
+        but inside the same column the page's <main> sets, or it would run
+        the full width of the window under a 2xl-wide composition. */}
+    <div class="mx-auto w-full max-w-2xl px-gutter pb-gutter">
+      <Footer tone="ink" />
     </div>
     <ScrollPager />
     <PageTransition />

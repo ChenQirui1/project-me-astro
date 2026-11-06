@@ -86,8 +86,13 @@
   /* One knob for the size of the whole site. Type, spacing, padding and
      control heights multiply by it, and so does the root font size (see
      `html` below), which carries Tailwind's rem utilities along. Hairlines,
-     the focus ring and the fill textures stay at their drawn size. */
-  --scale: 1.25;
+     the focus ring and the fill textures stay at their drawn size.
+
+     1 is the site at the size it is drawn: the ladders below already carry
+     the figures the sheet is set in, so the knob is a departure from that
+     size rather than a second place to read it from. It is only ever turned
+     down, by the two breakpoints underneath. */
+  --scale: 1;
 
   /* A second multiplier, on the type scale only. What limits the system on a
      phone is horizontal room for chrome — the masthead has to fit a wordmark,
@@ -107,7 +112,7 @@
    sets. */
 @media (max-width: 30rem) {
   :root {
-    --scale: 1.1;
+    --scale: 0.88;
     --type-boost: 1.15;
   }
 }
@@ -119,25 +124,30 @@
    the text stays readable while the chrome stops growing. */
 @media (max-width: 24rem) {
   :root {
-    --scale: 1;
+    --scale: 0.8;
     --type-boost: 1.15;
   }
 }
 
 @theme static {
-  /* --- Scale (px at 1x — this is a print-label system, not fluid web) --- */
-  --text-nano: calc(7px * var(--scale) * var(--type-boost));
-  --text-micro: calc(8px * var(--scale) * var(--type-boost));
-  --text-label: calc(9px * var(--scale) * var(--type-boost));
-  --text-caption: calc(10px * var(--scale) * var(--type-boost));
-  --text-body: calc(11px * var(--scale) * var(--type-boost));
-  --text-body-lg: calc(13px * var(--scale) * var(--type-boost));
-  --text-lede: calc(15px * var(--scale) * var(--type-boost));
-  --text-h3: calc(20px * var(--scale) * var(--type-boost));
-  --text-h2: calc(30px * var(--scale) * var(--type-boost));
-  --text-h1: calc(46px * var(--scale) * var(--type-boost));
-  --text-display: calc(72px * var(--scale) * var(--type-boost));
-  --text-display-xl: calc(116px * var(--scale) * var(--type-boost));
+  /* --- Scale (px at 1x — this is a print-label system, not fluid web) ---
+
+     The figures are the source sheet's print sizes opened up a quarter for
+     the screen: 7/8/9px captions set for paper are below what a browser
+     should ask anyone to read. The ratios between the steps are the sheet's
+     untouched, so the ladder still reads as one system. */
+  --text-nano: calc(8.75px * var(--scale) * var(--type-boost));
+  --text-micro: calc(10px * var(--scale) * var(--type-boost));
+  --text-label: calc(11.25px * var(--scale) * var(--type-boost));
+  --text-caption: calc(12.5px * var(--scale) * var(--type-boost));
+  --text-body: calc(13.75px * var(--scale) * var(--type-boost));
+  --text-body-lg: calc(16.25px * var(--scale) * var(--type-boost));
+  --text-lede: calc(18.75px * var(--scale) * var(--type-boost));
+  --text-h3: calc(25px * var(--scale) * var(--type-boost));
+  --text-h2: calc(37.5px * var(--scale) * var(--type-boost));
+  --text-h1: calc(57.5px * var(--scale) * var(--type-boost));
+  --text-display: calc(90px * var(--scale) * var(--type-boost));
+  --text-display-xl: calc(145px * var(--scale) * var(--type-boost));
 }
 
 :root {
@@ -171,33 +181,36 @@
 }
 
 :root {
-  /* Dense 2px-based ladder — label panels are packed, not airy. */
+  /* Dense ladder — label panels are packed, not airy. The sheet's steps are
+     a 2px grid; these are that grid opened up a quarter alongside the type,
+     so the 2.5px bottom step is deliberate and not a stray decimal: spacing
+     has to grow with the text it separates or the sheet closes up. */
   --space-0: 0px;
-  --space-1: calc(2px * var(--scale));
-  --space-2: calc(4px * var(--scale));
-  --space-3: calc(6px * var(--scale));
-  --space-4: calc(8px * var(--scale));
-  --space-5: calc(10px * var(--scale));
-  --space-6: calc(14px * var(--scale));
-  --space-7: calc(20px * var(--scale));
-  --space-8: calc(28px * var(--scale));
-  --space-9: calc(40px * var(--scale));
-  --space-10: calc(64px * var(--scale));
+  --space-1: calc(2.5px * var(--scale));
+  --space-2: calc(5px * var(--scale));
+  --space-3: calc(7.5px * var(--scale));
+  --space-4: calc(10px * var(--scale));
+  --space-5: calc(12.5px * var(--scale));
+  --space-6: calc(17.5px * var(--scale));
+  --space-7: calc(25px * var(--scale));
+  --space-8: calc(35px * var(--scale));
+  --space-9: calc(50px * var(--scale));
+  --space-10: calc(80px * var(--scale));
 
   /* Gap between tiled panels — the black page shows through as a gutter. */
-  --gutter: calc(4px * var(--scale));
-  --gutter-tight: calc(2px * var(--scale));
+  --gutter: calc(5px * var(--scale));
+  --gutter-tight: calc(2.5px * var(--scale));
 
   /* Panel padding presets */
-  --pad-panel: calc(8px * var(--scale)) calc(10px * var(--scale));
-  --pad-panel-tight: calc(4px * var(--scale)) calc(6px * var(--scale));
-  --pad-panel-loose: calc(14px * var(--scale)) calc(16px * var(--scale));
+  --pad-panel: calc(10px * var(--scale)) calc(12.5px * var(--scale));
+  --pad-panel-tight: calc(5px * var(--scale)) calc(7.5px * var(--scale));
+  --pad-panel-loose: calc(17.5px * var(--scale)) calc(20px * var(--scale));
 
   /* Fixed row heights keep stacked field rows on a common rhythm. */
-  --row-h: calc(18px * var(--scale));
-  --row-h-lg: calc(24px * var(--scale));
-  --control-h: calc(22px * var(--scale));
-  --control-h-lg: calc(28px * var(--scale));
+  --row-h: calc(22.5px * var(--scale));
+  --row-h-lg: calc(30px * var(--scale));
+  --control-h: calc(27.5px * var(--scale));
+  --control-h-lg: calc(35px * var(--scale));
 }
 
 :root {
@@ -260,8 +273,10 @@
 
   html {
     /* Tailwind's rem utilities (p-4, gap-6, w-56, max-w-2xl…) scale with this.
-       Breakpoints don't: media-query rems always use the browser's 16px. */
-    font-size: calc(100% * var(--scale));
+       Breakpoints don't: media-query rems always use the browser's 16px.
+       125% is the same quarter the ladders above are opened by, so a rem
+       utility and a `--space-*` token still land on the same rhythm. */
+    font-size: calc(125% * var(--scale));
     background: var(--surface-page);
   }
 
@@ -997,8 +1012,14 @@
     color: var(--text-muted);
   }
 
+  /* A pulled quote is a beat, not another paragraph. On the paragraph
+     rhythm alone it sits flush against the prose either side and reads as
+     one, so it takes a wider margin of its own — enough to outrank the
+     `* + *` rhythm, which it does on specificity whichever container it
+     lands in. Adjacent margins collapse, so the paragraph below keeps its
+     own spacing without the two adding up. */
   .copy blockquote {
-    margin: 0;
+    margin-block: var(--space-8);
     padding-left: var(--space-6);
     border-left: var(--frame);
     color: var(--text-muted);

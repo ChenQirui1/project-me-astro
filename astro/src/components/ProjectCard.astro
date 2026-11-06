@@ -27,16 +27,24 @@ const { title, image, description, featured = false } = Astro.props;
   </div>
 
   {/* Image well: the hero runs edge to edge, between the header bar and the
-      description, with the card's own hairlines as its frame. A fixed band,
-      cropped: the cards in a row then share one height, and a hero that is
-      the wrong shape for it is a hero to re-crop rather than a reason to let
-      the grid go ragged. */}
+      description, with the card's own hairlines as its frame. 16:9 — the
+      shape screenshots and screen recordings already come in, so a hero shot
+      off a 1080p or 1440p display seats itself without a crop. Cropped
+      rather than letterboxed, so the cards in a row still share one height
+      whatever shape the source is; the ratio is on the well itself, so that
+      height follows the column width instead of being pinned in pixels. */}
   <div class="border-b border-ink">
     {
       image ? (
-        <img src={image} alt={title} class="block h-56 w-full object-cover" />
+        <img
+          src={image}
+          alt={title}
+          width="1920"
+          height="1080"
+          class="block aspect-video w-full object-cover"
+        />
       ) : (
-        <div class="grid-lines flex h-56 w-full items-center justify-center">
+        <div class="grid-lines flex aspect-video w-full items-center justify-center">
           <span class="micro text-grey-500">no hero media</span>
         </div>
       )

@@ -1,60 +1,51 @@
 ---
-// The colophon strip: one cell crediting the thing the site is built with,
-// sitting on the drafting grid the way the masthead's icon cells do.
+// The colophon: one quiet line crediting what the site is built with, sitting
+// at the end of a page's content rather than in a bar of its own.
 //
-// Two tones, because the site has two surfaces. Interior pages are paper
-// panels on an ink page, so the footer is paper and inverts to ink on hover
-// like every other control. The landing page is drawn the other way round —
-// ink throughout, hairlines in grey-700 — and a paper strip under it would
-// read as a stray panel, so there the footer is ink and inverts to paper.
+// It is the last thing in the scrolling panel, so on a short page it follows
+// the content instead of being pinned to the bottom of the window — it reads
+// as a sign-off, which is what a colophon is, and never as another piece of
+// furniture competing with the masthead and the index column.
 
 interface Props {
-  /** `paper` for interior pages, `ink` for the landing composition. */
-  tone?: "paper" | "ink";
+  /**
+   * Which column the page sets its content in, so the colophon starts on the
+   * same left edge as the text above it. `reading` is the centred 820px
+   * column most pages use; `full` is the page gutter, for the catalogue's
+   * full-width grid.
+   */
+  width?: "reading" | "full";
 }
 
-const { tone = "paper" } = Astro.props;
-const onInk = tone === "ink";
+const { width = "reading" } = Astro.props;
 
 // The Astro mark, from the project's own monochrome icon (simple-icons).
-// Drawn in `currentColor` so it inverts with the cell rather than sitting on
-// it as a coloured sticker — the sheet has no logos, only marks.
+// Drawn in `currentColor` so it darkens with the text on hover rather than
+// sitting beside it as a coloured sticker — the sheet has no logos, only marks.
 const ASTRO_MARK =
   "M8.358 20.162c-1.186-1.07-1.532-3.316-1.038-4.944.856 1.026 2.043 1.352 3.272 1.535 1.897.283 3.76.177 5.522-.678.202-.098.388-.229.608-.36.166.473.209.95.151 1.437-.14 1.185-.738 2.1-1.688 2.794-.38.277-.782.525-1.175.787-1.205.804-1.531 1.747-1.078 3.119l.044.148a3.158 3.158 0 0 1-1.407-1.188 3.31 3.31 0 0 1-.544-1.815c-.004-.32-.004-.642-.048-.958-.106-.769-.472-1.113-1.161-1.133-.707-.02-1.267.411-1.415 1.09-.012.053-.028.104-.045.165h.002zm-5.961-4.445s3.24-1.575 6.49-1.575l2.451-7.565c.092-.366.36-.614.662-.614.302 0 .57.248.662.614l2.45 7.565c3.85 0 6.491 1.575 6.491 1.575L16.088.727C15.93.285 15.663 0 15.303 0H8.697c-.36 0-.615.285-.784.727l-5.516 14.99z";
 ---
 
+{/* The padding matches the gutter the pages set on their own content, so the
+    line starts on the same left edge as the text above it. The generous top
+    space is what separates it from that text — a rule or a plate would make
+    it an element of the page rather than a note at the end of one. */}
 <footer
   class:list={[
-    "flex shrink-0 items-stretch",
-    onInk ? "panel-invert" : "panel",
+    "pt-10 pb-4",
+    width === "full" ? "px-4 sm:px-6 sm:pb-6" : "mx-auto w-full max-w-[820px] px-4 sm:px-8 sm:pb-8",
   ]}
 >
-  {/* The empty run of drafting grid, same as the masthead's. It is what keeps
-      the credit at the far edge instead of floating in the middle, and it is
-      dropped on a narrow screen where there is no run to give it. */}
-  <div
-    class:list={[
-      "grid-lines hidden flex-1 sm:block",
-      onInk && "opacity-20",
-    ]}
-  >
-  </div>
-
   <a
     href="https://astro.build"
     target="_blank"
     rel="noopener noreferrer"
-    class:list={[
-      "micro ml-auto flex items-center gap-2 px-3 py-2 transition-[background-color,color] duration-80 ease-linear",
-      onInk
-        ? "border-l border-grey-700 text-grey-300 hover:bg-paper hover:text-ink"
-        : "border-l border-ink text-grey-600 hover:bg-ink hover:text-paper-pure",
-    ]}
+    class="micro inline-flex items-center gap-1.5 text-grey-400 transition-colors duration-80 ease-linear hover:text-ink"
   >
     <svg
       viewBox="0 0 24 24"
-      width="13"
-      height="13"
+      width="11"
+      height="11"
       fill="currentColor"
       aria-hidden="true"
       class="shrink-0"

@@ -1,0 +1,11 @@
+# Everything here is meant to be found.
+#
+# The one line that earns its keep is Sitemap: a crawler has no other way to
+# learn about a page nothing links to, and robots.txt is the only file it is
+# guaranteed to ask for. @astrojs/sitemap writes the file named below at
+# build time; see astro.config.mjs.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://ivanchen.xyz/sitemap-index.xml

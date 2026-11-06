@@ -4,7 +4,7 @@ import "../styles/tailwind.css";
 import ScrollPager from "../components/ScrollPager.astro";
 import PageTransition from "../components/PageTransition.astro";
 import Meta from "../components/Meta.astro";
-import Footer from "../components/ui/Footer.astro";
+import { HOME_TITLE } from "../lib/site";
 ---
 
 <!doctype html>
@@ -27,24 +27,13 @@ import Footer from "../components/ui/Footer.astro";
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="theme-color" content="#111111" />
     <meta name="generator" content={Astro.generator} />
-    <title>IVAN.C</title>
-    <Meta title="IVAN.C — Product Engineer" />
+    <title>{HOME_TITLE}</title>
+    <Meta title={HOME_TITLE} />
     <ClientRouter />
   </head>
-  <body class="flex min-h-screen flex-col bg-ink">
-    <div
-      id="container"
-      class="flex flex-1 flex-col"
-      transition:name="landing"
-      transition:animate="none"
-    >
+  <body class="min-h-screen bg-ink">
+    <div id="container" transition:name="landing" transition:animate="none">
       <slot />
-    </div>
-    {/* Outside #container, so it is not part of the landing's transition —
-        but inside the same column the page's <main> sets, or it would run
-        the full width of the window under a 2xl-wide composition. */}
-    <div class="mx-auto w-full max-w-2xl px-gutter pb-gutter">
-      <Footer tone="ink" />
     </div>
     <ScrollPager />
     <PageTransition />

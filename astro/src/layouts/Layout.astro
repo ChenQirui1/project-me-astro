@@ -16,9 +16,11 @@ interface Props {
   image?: string;
   imageAlt?: string;
   type?: "website" | "article";
+  /** The column this page sets its content in; the colophon follows it. */
+  contentWidth?: "reading" | "full";
 }
 
-const { title, description, image, imageAlt, type } = Astro.props;
+const { title, description, image, imageAlt, type, contentWidth } = Astro.props;
 const pageTitle = title ? `${title} / IVAN.C` : "IVAN.C";
 ---
 
@@ -68,9 +70,9 @@ const pageTitle = title ? `${title} / IVAN.C` : "IVAN.C";
         transition:animate="none"
       >
         <slot />
+        <Footer width={contentWidth} />
       </main>
     </div>
-    <Footer />
     <ScrollPager />
     <PageTransition />
   </body>

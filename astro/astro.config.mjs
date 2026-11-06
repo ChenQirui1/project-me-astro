@@ -2,6 +2,7 @@
 import { defineConfig } from "astro/config";
 
 import mdx from "@astrojs/mdx";
+import sitemap from "@astrojs/sitemap";
 
 import tailwindcss from "@tailwindcss/vite";
 
@@ -17,7 +18,19 @@ export default defineConfig({
   // sitemap, feeds) rather than site-relative ones.
   site: "https://ivanchen.xyz",
 
-  integrations: [mdx(), devAssets(), featureRoutes()],
+  // `sitemap` writes /sitemap-index.xml and /sitemap-0.xml at build time,
+  // listing every static route off `site` above. public/robots.txt points at
+  // it, which is the only way a crawler finds pages that nothing links to.
+  // 404 is excluded: it is a real file in the output but not a page anyone
+  // should be sent to from a search result.
+  integrations: [
+    mdx(),
+    sitemap({
+      filter: (page) => !page.endsWith("/404/") && !page.endsWith("/404"),
+    }),
+    devAssets(),
+    featureRoutes(),
+  ],
 
   markdown: {
     rehypePlugins: [rehypeSections],
